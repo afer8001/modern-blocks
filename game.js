@@ -1255,16 +1255,28 @@ function updatePlayer() {
 
 const inventory = [];
 
-for (
-    let i = 0;
-    i < 36;
-    i++
-) {
+// 27 slot inventory
+
+for (let i = 0; i < 27; i++) {
 
     inventory.push({
 
         item: ITEM.NONE,
+        count: 0
 
+    });
+
+}
+
+// 9 slot hotbar
+
+const hotbar = [];
+
+for (let i = 0; i < 9; i++) {
+
+    hotbar.push({
+
+        item: ITEM.NONE,
         count: 0
 
     });
