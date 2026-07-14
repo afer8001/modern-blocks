@@ -1,12 +1,24 @@
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+// ======================================================
+// MODERN BLOCKS
+// VERSION 0.7
+// PART 1/8
+// ======================================================
 
 // ================= CANVAS =================
 
+const canvas =
+    document.getElementById("game");
+
+const ctx =
+    canvas.getContext("2d");
+
 function resize() {
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width =
+        window.innerWidth;
+
+    canvas.height =
+        window.innerHeight;
 
 }
 
@@ -20,12 +32,17 @@ window.addEventListener(
 // ================= SETTINGS =================
 
 let settings = JSON.parse(
-    localStorage.getItem("settings")
+
+    localStorage.getItem(
+        "settings"
+    )
+
 ) || {
 
     left: "KeyA",
     right: "KeyD",
-    jump: "Space"
+    jump: "Space",
+    inventory: "KeyE"
 
 };
 
@@ -33,42 +50,73 @@ let settings = JSON.parse(
 
 const keys = {};
 
-let jumpPressed = false;
-
 document.addEventListener(
     "keydown",
     e => {
 
-        if (!keys[e.code]) {
-
-            if (
-                e.code === settings.jump
-            ) {
-
-                jumpPressed = true;
-
-            }
-
-        }
-
         keys[e.code] = true;
 
+        // pause
+
         if (
-            e.code === "Escape"
+            e.code ===
+            "Escape"
         ) {
 
-            paused = !paused;
+            paused =
+                !paused;
 
         }
 
+        // inventory
+
         if (
-            e.code === "KeyE"
+            e.code ===
+            settings.inventory
         ) {
 
             inventoryOpen =
                 !inventoryOpen;
 
         }
+
+        // hotbar
+
+        if (
+            e.code === "Digit1"
+        ) selectedSlot = 0;
+
+        if (
+            e.code === "Digit2"
+        ) selectedSlot = 1;
+
+        if (
+            e.code === "Digit3"
+        ) selectedSlot = 2;
+
+        if (
+            e.code === "Digit4"
+        ) selectedSlot = 3;
+
+        if (
+            e.code === "Digit5"
+        ) selectedSlot = 4;
+
+        if (
+            e.code === "Digit6"
+        ) selectedSlot = 5;
+
+        if (
+            e.code === "Digit7"
+        ) selectedSlot = 6;
+
+        if (
+            e.code === "Digit8"
+        ) selectedSlot = 7;
+
+        if (
+            e.code === "Digit9"
+        ) selectedSlot = 8;
 
     }
 );
@@ -87,7 +135,10 @@ document.addEventListener(
 const mouse = {
 
     x: 0,
-    y: 0
+    y: 0,
+
+    worldX: 0,
+    worldY: 0
 
 };
 
@@ -113,91 +164,22 @@ canvas.addEventListener(
 
 let paused = false;
 
-const BLOCK = 32;
-
-const WORLD_WIDTH = 300;
-const WORLD_HEIGHT = 120;
+let inventoryOpen =
+    false;
 
 // ================= WORLD =================
 
+const BLOCK = 32;
+
+const WORLD_WIDTH =
+    1000;
+
+const WORLD_HEIGHT =
+    180;
+
 let world = [];
 
-const surface = [];
-
-// ================= INVENTORY =================
-
-let inventoryOpen = false;
-
-const inventory = {
-
-    grass: 0,
-    dirt: 0,
-    stone: 0,
-    wood: 0,
-    leaf: 0
-
-};
-
-// ================= DROPS =================
-
-let droppedItems = [];
-
-// ================= HOTBAR =================
-
-let selectedBlock = 2;
-
-// ================= HEALTH =================
-
-const playerHealth = {
-
-    max: 100,
-    current: 100
-
-};
-
-// ================= CAMERA =================
-
-const camera = {
-
-    x: 0,
-    y: 0
-
-};
-
-// ================= PLAYER =================
-
-const spawnPoint = {
-
-    x: 500,
-    y: 200
-
-};
-
-const player = {
-
-    x: spawnPoint.x,
-    y: spawnPoint.y,
-
-    width: 24,
-    height: 50,
-
-    vx: 0,
-    vy: 0,
-
-    speed: 4,
-    jumpPower: 12,
-
-    direction: 1,
-
-    onGround: false
-
-};
-
-let walkCycle = 0;
-
-const gravity = 0.7;
-
-// ================= TILE IDS =================
+// ================= TILES =================
 
 const TILE = {
 
@@ -217,9 +199,202 @@ const TILE = {
 
 };
 
-// ================= WORLD GENERATION =================
+// ================= ITEMS =================
 
-// create empty world
+const ITEM = {
+
+    NONE: 0,
+
+    GRASS: 1,
+
+    DIRT: 2,
+
+    STONE: 3,
+
+    WOOD: 4,
+
+    LEAF: 5,
+
+    STICK: 6,
+
+    CRAFTING_TABLE: 7,
+
+    WOOD_PICKAXE: 8,
+
+    WOOD_AXE: 9
+
+};
+
+// ================= DROPS =================
+
+let droppedItems = [];
+
+// ================= CAMERA =================
+
+const camera = {
+
+    x: 0,
+    y: 0
+
+};
+
+// ================= HEALTH =================
+
+const playerHealth = {
+
+    max: 100,
+    current: 100
+
+};
+
+// ================= INVENTORY =================
+
+// 36 slots
+
+const inventory = [];
+
+for (
+    let i = 0;
+    i < 36;
+    i++
+) {
+
+    inventory.push({
+
+        item: ITEM.NONE,
+
+        count: 0
+
+    });
+
+}
+
+// ================= HOTBAR =================
+
+let selectedSlot = 0;
+
+// ================= WALK =================
+
+let walkCycle = 0;
+
+// ================= JUMP =================
+
+let jumpPressed =
+    false;
+
+document.addEventListener(
+    "keydown",
+    e => {
+
+        if (
+            e.code ===
+            settings.jump
+        ) {
+
+            jumpPressed =
+                true;
+
+        }
+
+    }
+);
+
+// ================= PLAYER =================
+
+const spawnPoint = {
+
+    x: 400,
+    y: 200
+
+};
+
+const player = {
+
+    x: spawnPoint.x,
+    y: spawnPoint.y,
+
+    width: 24,
+    height: 50,
+
+    vx: 0,
+    vy: 0,
+
+    speed: 4,
+
+    jumpPower: 11,
+
+    direction: 1,
+
+    onGround: false
+
+};
+
+const gravity =
+    0.7;
+
+// ================= FPS =================
+
+let fps = 0;
+
+let frames = 0;
+
+let lastFpsTime =
+    performance.now();
+// ======================================================
+// WORLD GENERATION
+// PART 2/8
+// ======================================================
+
+// ================= TERRAIN SETTINGS =================
+
+const SURFACE_LEVEL = 40;
+
+const HILL_HEIGHT = 8;
+
+const CAVE_START_DEPTH = 55;
+
+// ================= HEIGHT MAP =================
+
+const heightMap = [];
+
+let currentHeight =
+    SURFACE_LEVEL;
+
+for (
+    let x = 0;
+    x < WORLD_WIDTH;
+    x++
+) {
+
+    currentHeight +=
+        Math.floor(
+            Math.random() * 3
+        ) - 1;
+
+    if (
+        currentHeight <
+        SURFACE_LEVEL - HILL_HEIGHT
+    ) {
+        currentHeight =
+            SURFACE_LEVEL -
+            HILL_HEIGHT;
+    }
+
+    if (
+        currentHeight >
+        SURFACE_LEVEL + HILL_HEIGHT
+    ) {
+        currentHeight =
+            SURFACE_LEVEL +
+            HILL_HEIGHT;
+    }
+
+    heightMap[x] =
+        currentHeight;
+
+}
+
+// ================= CREATE WORLD =================
 
 for (
     let y = 0;
@@ -235,76 +410,63 @@ for (
         x++
     ) {
 
-        world[y][x] =
-            TILE.AIR;
+        const surface =
+            heightMap[x];
+
+        // sky
+
+        if (
+            y < surface
+        ) {
+
+            world[y][x] =
+                TILE.AIR;
+
+        }
+
+        // grass
+
+        else if (
+            y === surface
+        ) {
+
+            world[y][x] =
+                TILE.GRASS;
+
+        }
+
+        // dirt
+
+        else if (
+            y <
+            surface + 6
+        ) {
+
+            world[y][x] =
+                TILE.DIRT;
+
+        }
+
+        // stone
+
+        else {
+
+            world[y][x] =
+                TILE.STONE;
+
+        }
 
     }
 
 }
 
-// terrain heights
+// ================= BEDROCK =================
 
 for (
     let x = 0;
     x < WORLD_WIDTH;
     x++
 ) {
-
-    const height =
-
-        22 +
-
-        Math.floor(
-            Math.sin(
-                x * 0.15
-            ) * 3
-        ) +
-
-        Math.floor(
-            Math.sin(
-                x * 0.04
-            ) * 5
-        );
-
-    surface[x] = height;
-
-}
-
-// generate terrain
-
-for (
-    let x = 0;
-    x < WORLD_WIDTH;
-    x++
-) {
-
-    const h =
-        surface[x];
-
-    world[h][x] =
-        TILE.GRASS;
-
-    for (
-        let y = h + 1;
-        y < h + 6;
-        y++
-    ) {
-
-        world[y][x] =
-            TILE.DIRT;
-
-    }
-
-    for (
-        let y = h + 6;
-        y < WORLD_HEIGHT - 1;
-        y++
-    ) {
-
-        world[y][x] =
-            TILE.STONE;
-
-    }
 
     world[
         WORLD_HEIGHT - 1
@@ -312,69 +474,85 @@ for (
 
 }
 
-// caves
+// ================= CAVES =================
+
+// غارها فقط زیر زمین
 
 for (
     let i = 0;
-    i < 300;
+    i < 450;
     i++
 ) {
 
-    const cx =
+    let cx = Math.floor(
+        Math.random() *
+        WORLD_WIDTH
+    );
+
+    let cy =
+        CAVE_START_DEPTH +
         Math.floor(
             Math.random() *
-            WORLD_WIDTH
+            (
+                WORLD_HEIGHT -
+                CAVE_START_DEPTH -
+                10
+            )
         );
 
-    const cy =
+    const length =
         25 +
         Math.floor(
-            Math.random() * 70
-        );
-
-    const radius =
-        2 +
-        Math.floor(
-            Math.random() * 4
+            Math.random() * 35
         );
 
     for (
-        let y = -radius;
-        y <= radius;
-        y++
+        let j = 0;
+        j < length;
+        j++
     ) {
 
+        const radius =
+            2 +
+            Math.floor(
+                Math.random() * 3
+            );
+
         for (
-            let x = -radius;
-            x <= radius;
-            x++
+            let yy = -radius;
+            yy <= radius;
+            yy++
         ) {
 
-            if (
-
-                x * x +
-                y * y <=
-                radius * radius
-
+            for (
+                let xx = -radius;
+                xx <= radius;
+                xx++
             ) {
 
                 const tx =
-                    cx + x;
+                    cx + xx;
 
                 const ty =
-                    cy + y;
+                    cy + yy;
 
                 if (
+                    tx < 0 ||
+                    ty < CAVE_START_DEPTH ||
+                    tx >= WORLD_WIDTH ||
+                    ty >= WORLD_HEIGHT - 1
+                ) {
+                    continue;
+                }
 
-                    tx > 0 &&
-                    ty > 0 &&
+                const dist =
+                    Math.sqrt(
+                        xx * xx +
+                        yy * yy
+                    );
 
-                    tx <
-                    WORLD_WIDTH &&
-
-                    ty <
-                    WORLD_HEIGHT - 1
-
+                if (
+                    dist <= radius
                 ) {
 
                     world[ty][tx] =
@@ -386,67 +564,208 @@ for (
 
         }
 
+        cx +=
+            Math.floor(
+                Math.random() * 3
+            ) - 1;
+
+        cy +=
+            Math.floor(
+                Math.random() * 3
+            ) - 1;
+
     }
 
 }
 
-// trees
+// ================= TREES =================
 
 for (
     let x = 10;
-    x < WORLD_WIDTH;
-    x += 18
+    x < WORLD_WIDTH - 10;
+    x++
 ) {
 
-    const ground =
-        surface[x];
+    if (
+        Math.random() >
+        0.08
+    ) continue;
 
-    world[
-        ground - 1
-    ][x] = TILE.WOOD;
+    const surface =
+        heightMap[x];
 
-    world[
-        ground - 2
-    ][x] = TILE.WOOD;
+    const treeHeight =
+        4 +
+        Math.floor(
+            Math.random() * 3
+        );
 
-    world[
-        ground - 3
-    ][x] = TILE.WOOD;
+    // trunk
 
-    world[
-        ground - 4
-    ][x] = TILE.LEAF;
+    for (
+        let h = 1;
+        h <= treeHeight;
+        h++
+    ) {
 
-    world[
-        ground - 5
-    ][x] = TILE.LEAF;
+        world[
+            surface - h
+        ][x] =
+            TILE.WOOD;
 
-    world[
-        ground - 4
-    ][x - 1] = TILE.LEAF;
+    }
 
-    world[
-        ground - 4
-    ][x + 1] = TILE.LEAF;
+    // leaves
 
-    world[
-        ground - 3
-    ][x - 1] = TILE.LEAF;
+    const top =
+        surface -
+        treeHeight;
 
-    world[
-        ground - 3
-    ][x + 1] = TILE.LEAF;
+    for (
+        let ly = -2;
+        ly <= 2;
+        ly++
+    ) {
+
+        for (
+            let lx = -2;
+            lx <= 2;
+            lx++
+        ) {
+
+            const tx =
+                x + lx;
+
+            const ty =
+                top + ly;
+
+            if (
+                tx < 0 ||
+                ty < 0 ||
+                tx >= WORLD_WIDTH ||
+                ty >= WORLD_HEIGHT
+            ) {
+                continue;
+            }
+
+            const dist =
+                Math.abs(lx) +
+                Math.abs(ly);
+
+            if (
+                dist <= 3
+            ) {
+
+                if (
+                    world[ty][tx] ===
+                    TILE.AIR
+                ) {
+
+                    world[ty][tx] =
+                        TILE.LEAF;
+
+                }
+
+            }
+
+        }
+
+    }
 
 }
-// ================= FPS =================
 
-let fps = 0;
-let frames = 0;
-let lastFpsTime = performance.now();
+// ================= SPAWN =================
 
-// ================= HELPERS =================
+const spawnX =
+    Math.floor(
+        WORLD_WIDTH / 2
+    );
 
-function getTile(tx, ty) {
+player.x =
+    spawnX * BLOCK;
+
+player.y =
+    (
+        heightMap[spawnX] - 5
+    ) * BLOCK;
+
+spawnPoint.x =
+    player.x;
+
+spawnPoint.y =
+    player.y;
+
+// ================= ITEM HELPERS =================
+
+function createItem(
+    item,
+    count = 1
+) {
+
+    return {
+
+        item: item,
+
+        count: count
+
+    };
+
+}
+
+function getItemName(
+    item
+) {
+
+    if (
+        item === ITEM.GRASS
+    ) return "Grass";
+
+    if (
+        item === ITEM.DIRT
+    ) return "Dirt";
+
+    if (
+        item === ITEM.STONE
+    ) return "Stone";
+
+    if (
+        item === ITEM.WOOD
+    ) return "Wood";
+
+    if (
+        item === ITEM.LEAF
+    ) return "Leaf";
+
+    if (
+        item === ITEM.STICK
+    ) return "Stick";
+
+    if (
+        item === ITEM.CRAFTING_TABLE
+    ) return "Crafting Table";
+
+    if (
+        item === ITEM.WOOD_PICKAXE
+    ) return "Wood Pickaxe";
+
+    if (
+        item === ITEM.WOOD_AXE
+    ) return "Wood Axe";
+
+    return "None";
+
+}
+// ======================================================
+// PLAYER + PHYSICS
+// PART 3/8
+// ======================================================
+
+// ================= COLLISION =================
+
+function getTile(
+    tx,
+    ty
+) {
 
     if (
         tx < 0 ||
@@ -476,11 +795,14 @@ function setTile(
         ty >= WORLD_HEIGHT
     ) return;
 
-    world[ty][tx] = value;
+    world[ty][tx] =
+        value;
 
 }
 
-function isSolid(tile) {
+function isSolid(
+    tile
+) {
 
     return (
 
@@ -495,16 +817,19 @@ function isSolid(tile) {
 
 }
 
-// ================= COLLISION =================
-
-function collideAt(x, y) {
+function collideAt(
+    x,
+    y
+) {
 
     const left =
+
         Math.floor(
             x / BLOCK
         );
 
     const right =
+
         Math.floor(
             (
                 x +
@@ -514,11 +839,13 @@ function collideAt(x, y) {
         );
 
     const top =
+
         Math.floor(
             y / BLOCK
         );
 
     const bottom =
+
         Math.floor(
             (
                 y +
@@ -563,23 +890,22 @@ function collideAt(x, y) {
 
 // ================= HEALTH =================
 
-function damage(amount) {
+function damage(
+    amount
+) {
 
-    playerHealth.current -= amount;
+    playerHealth.current -=
+        amount;
 
     if (
         playerHealth.current <= 0
     ) {
-
-        playerHealth.current = 0;
 
         respawn();
 
     }
 
 }
-
-// ================= RESPAWN =================
 
 function respawn() {
 
@@ -629,19 +955,35 @@ function updateCamera() {
 
     if (
         camera.x < 0
-    ) camera.x = 0;
+    ) {
+
+        camera.x = 0;
+
+    }
 
     if (
         camera.y < 0
-    ) camera.y = 0;
+    ) {
+
+        camera.y = 0;
+
+    }
 
     if (
         camera.x > maxCamX
-    ) camera.x = maxCamX;
+    ) {
+
+        camera.x = maxCamX;
+
+    }
 
     if (
         camera.y > maxCamY
-    ) camera.y = maxCamY;
+    ) {
+
+        camera.y = maxCamY;
+
+    }
 
 }
 
@@ -652,7 +994,9 @@ function updatePlayer() {
     player.vx = 0;
 
     if (
-        keys[settings.left]
+        keys[
+            settings.left
+        ]
     ) {
 
         player.vx =
@@ -664,7 +1008,9 @@ function updatePlayer() {
     }
 
     if (
-        keys[settings.right]
+        keys[
+            settings.right
+        ]
     ) {
 
         player.vx =
@@ -701,11 +1047,12 @@ function updatePlayer() {
         ) > 0
     ) {
 
-        walkCycle += 0.18;
+        walkCycle +=
+            0.15;
 
     }
 
-    // X movement
+    // ================= X =================
 
     player.x +=
         player.vx;
@@ -736,9 +1083,7 @@ function updatePlayer() {
 
                 player.width
 
-                -
-
-                1;
+                - 1;
 
         }
 
@@ -763,9 +1108,10 @@ function updatePlayer() {
 
     }
 
-    // gravity
+    // ================= GRAVITY =================
 
-    player.vy += gravity;
+    player.vy +=
+        gravity;
 
     if (
         player.vy > 20
@@ -781,7 +1127,7 @@ function updatePlayer() {
     player.onGround =
         false;
 
-    // Y collision
+    // ================= Y =================
 
     if (
         collideAt(
@@ -839,7 +1185,7 @@ function updatePlayer() {
 
     }
 
-    // world border
+    // ================= WORLD BORDER =================
 
     if (
         player.x < 0
@@ -852,9 +1198,7 @@ function updatePlayer() {
     const maxX =
 
         WORLD_WIDTH *
-        BLOCK
-
-        -
+        BLOCK -
 
         player.width;
 
@@ -866,16 +1210,16 @@ function updatePlayer() {
 
     }
 
-    // void damage
+    // ================= VOID =================
 
     if (
 
         player.y >
 
         WORLD_HEIGHT *
-        BLOCK
+        BLOCK +
 
-        + 500
+        500
 
     ) {
 
@@ -894,33 +1238,155 @@ function update() {
     updateCamera();
 
 }
-// ================= INVENTORY HELPERS =================
+// ======================================================
+// INVENTORY + ITEMS + DROPS
+// PART 4/8
+// ======================================================
 
-function addItem(tile) {
+// ================= ITEMS =================
 
-    if (tile === TILE.GRASS)
-        inventory.grass++;
+function addItem(
+    itemId,
+    count = 1
+) {
 
-    if (tile === TILE.DIRT)
-        inventory.dirt++;
+    // stack existing
 
-    if (tile === TILE.STONE)
-        inventory.stone++;
+    for (
+        let i = 0;
+        i < inventory.length;
+        i++
+    ) {
 
-    if (tile === TILE.WOOD)
-        inventory.wood++;
+        const slot =
+            inventory[i];
 
-    if (tile === TILE.LEAF)
-        inventory.leaf++;
+        if (
+            slot.item === itemId &&
+            slot.count < 999
+        ) {
+
+            slot.count += count;
+            return true;
+
+        }
+
+    }
+
+    // empty slot
+
+    for (
+        let i = 0;
+        i < inventory.length;
+        i++
+    ) {
+
+        const slot =
+            inventory[i];
+
+        if (
+            slot.item ===
+            ITEM.NONE
+        ) {
+
+            slot.item =
+                itemId;
+
+            slot.count =
+                count;
+
+            return true;
+
+        }
+
+    }
+
+    return false;
 
 }
 
-// ================= DROP SYSTEM =================
+function removeItem(
+    itemId,
+    count = 1
+) {
+
+    for (
+        let i = 0;
+        i < inventory.length;
+        i++
+    ) {
+
+        const slot =
+            inventory[i];
+
+        if (
+            slot.item === itemId
+        ) {
+
+            slot.count -= count;
+
+            if (
+                slot.count <= 0
+            ) {
+
+                slot.item =
+                    ITEM.NONE;
+
+                slot.count = 0;
+
+            }
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+}
+
+function countItem(
+    itemId
+) {
+
+    let total = 0;
+
+    for (
+        const slot
+        of inventory
+    ) {
+
+        if (
+            slot.item === itemId
+        ) {
+
+            total +=
+                slot.count;
+
+        }
+
+    }
+
+    return total;
+
+}
+
+// ================= START ITEMS =================
+
+// تست اولیه
+
+addItem(
+    ITEM.WOOD,
+    12
+);
+
+// ================= DROPS =================
 
 function spawnDrop(
     x,
     y,
-    tile
+    item
 ) {
 
     droppedItems.push({
@@ -932,75 +1398,98 @@ function spawnDrop(
             (Math.random() - 0.5)
             * 2,
 
-        vy: -2,
+        vy: -3,
 
-        tile: tile
+        item: item
 
     });
 
 }
 
+// ================= PICKUP =================
+
 function updateDrops() {
 
     for (
+
         let i =
             droppedItems.length - 1;
+
         i >= 0;
+
         i--
+
     ) {
 
-        const item =
+        const drop =
             droppedItems[i];
 
-        item.vy += 0.25;
+        drop.vy += 0.25;
 
         if (
-            item.vy > 8
+            drop.vy > 8
         ) {
-            item.vy = 8;
+
+            drop.vy = 8;
+
         }
 
-        item.x += item.vx;
-        item.y += item.vy;
+        drop.x +=
+            drop.vx;
+
+        drop.y +=
+            drop.vy;
 
         const tx =
+
             Math.floor(
-                item.x / BLOCK
+                drop.x /
+                BLOCK
             );
 
         const ty =
+
             Math.floor(
-                item.y / BLOCK
+                drop.y /
+                BLOCK
             );
 
         if (
             isSolid(
-                getTile(tx, ty)
+                getTile(
+                    tx,
+                    ty
+                )
             )
         ) {
 
-            item.y =
-                ty * BLOCK - 6;
+            drop.y =
+                ty * BLOCK - 8;
 
-            item.vy = 0;
+            drop.vy = 0;
 
         }
 
         const dx =
-            item.x -
+
+            drop.x -
+
             (
                 player.x +
                 player.width / 2
             );
 
         const dy =
-            item.y -
+
+            drop.y -
+
             (
                 player.y +
                 player.height / 2
             );
 
         const dist =
+
             Math.sqrt(
                 dx * dx +
                 dy * dy
@@ -1011,7 +1500,8 @@ function updateDrops() {
         ) {
 
             addItem(
-                item.tile
+                drop.item,
+                1
             );
 
             droppedItems.splice(
@@ -1025,10 +1515,327 @@ function updateDrops() {
 
 }
 
-// ================= RANGE =================
+// ================= TOOLS =================
+
+const TOOL = {
+
+    NONE: 0,
+
+    WOOD_PICKAXE: 1,
+
+    WOOD_AXE: 2
+
+};
+
+let equippedTool =
+    TOOL.NONE;
+
+// ================= CRAFTING =================
+
+const recipes = [
+
+    {
+
+        result:
+            ITEM.STICK,
+
+        count: 4,
+
+        ingredients: [
+
+            {
+                item:
+                    ITEM.WOOD,
+
+                count: 2
+            }
+
+        ]
+
+    },
+
+    {
+
+        result:
+            ITEM.CRAFTING_TABLE,
+
+        count: 1,
+
+        ingredients: [
+
+            {
+                item:
+                    ITEM.WOOD,
+
+                count: 4
+            }
+
+        ]
+
+    },
+
+    {
+
+        result:
+            ITEM.WOOD_PICKAXE,
+
+        count: 1,
+
+        ingredients: [
+
+            {
+                item:
+                    ITEM.WOOD,
+
+                count: 3
+            },
+
+            {
+                item:
+                    ITEM.STICK,
+
+                count: 2
+            }
+
+        ]
+
+    },
+
+    {
+
+        result:
+            ITEM.WOOD_AXE,
+
+        count: 1,
+
+        ingredients: [
+
+            {
+                item:
+                    ITEM.WOOD,
+
+                count: 3
+            },
+
+            {
+                item:
+                    ITEM.STICK,
+
+                count: 2
+            }
+
+        ]
+
+    }
+
+];
+
+// ================= CRAFT =================
+
+function canCraft(
+    recipe
+) {
+
+    for (
+        const ing
+        of recipe.ingredients
+    ) {
+
+        if (
+
+            countItem(
+                ing.item
+            ) <
+
+            ing.count
+
+        ) {
+
+            return false;
+
+        }
+
+    }
+
+    return true;
+
+}
+
+function craft(
+    recipe
+) {
+
+    if (
+        !canCraft(
+            recipe
+        )
+    ) return;
+
+    for (
+        const ing
+        of recipe.ingredients
+    ) {
+
+        removeItem(
+            ing.item,
+            ing.count
+        );
+
+    }
+
+    addItem(
+        recipe.result,
+        recipe.count
+    );
+
+}
+
+// ================= INVENTORY INPUT =================
+
+document.addEventListener(
+    "keydown",
+    e => {
+
+        if (
+            !inventoryOpen
+        ) return;
+
+        // craft stick
+
+        if (
+            e.code === "KeyR"
+        ) {
+
+            craft(
+                recipes[0]
+            );
+
+        }
+
+        // crafting table
+
+        if (
+            e.code === "KeyT"
+        ) {
+
+            craft(
+                recipes[1]
+            );
+
+        }
+
+        // pickaxe
+
+        if (
+            e.code === "KeyP"
+        ) {
+
+            craft(
+                recipes[2]
+            );
+
+        }
+
+        // axe
+
+        if (
+            e.code === "KeyX"
+        ) {
+
+            craft(
+                recipes[3]
+            );
+
+        }
+
+    }
+);
+
+// ================= UPDATE OVERRIDE =================
+
+function update() {
+
+    updatePlayer();
+
+    updateCamera();
+
+    updateDrops();
+
+}
+// ======================================================
+// MINING + PLACING + TOOLS
+// PART 5/8
+// ======================================================
+
+// ================= MINING =================
+
+let miningBlock = null;
+let miningProgress = 0;
 
 const BREAK_RANGE = 6;
-const PLACE_RANGE = 6;
+
+// زمان کندن بر حسب ثانیه
+
+const breakTimes = {
+
+    [TILE.GRASS]: 0.5,
+
+    [TILE.DIRT]: 0.7,
+
+    [TILE.WOOD]: 2.0,
+
+    [TILE.LEAF]: 0.2,
+
+    [TILE.STONE]: 999
+
+};
+
+// ================= TOOL SPEED =================
+
+function getBreakTime(tile) {
+
+    let time =
+        breakTimes[tile] || 1;
+
+    // pickaxe
+
+    if (
+        equippedTool ===
+        TOOL.WOOD_PICKAXE
+    ) {
+
+        if (
+            tile === TILE.STONE
+        ) {
+
+            time = 1.2;
+
+        }
+
+    }
+
+    // axe
+
+    if (
+        equippedTool ===
+        TOOL.WOOD_AXE
+    ) {
+
+        if (
+            tile === TILE.WOOD
+        ) {
+
+            time = 0.6;
+
+        }
+
+    }
+
+    return time;
+
+}
+
+// ================= DISTANCE =================
 
 function tileDistance(
     tx,
@@ -1070,7 +1877,7 @@ function tileDistance(
 
 }
 
-// ================= PLAYER TILE =================
+// ================= PLAYER INSIDE TILE =================
 
 function playerInsideTile(
     tx,
@@ -1086,18 +1893,18 @@ function playerInsideTile(
     return (
 
         player.x <
-            bx + BLOCK &&
+        bx + BLOCK &&
 
         player.x +
-            player.width >
-            bx &&
+        player.width >
+        bx &&
 
         player.y <
-            by + BLOCK &&
+        by + BLOCK &&
 
         player.y +
-            player.height >
-            by
+        player.height >
+        by
 
     );
 
@@ -1136,131 +1943,246 @@ function hasNeighbor(
 
 }
 
-// ================= MOUSE EVENTS =================
+// ================= TILE -> ITEM =================
+
+function tileToItem(
+    tile
+) {
+
+    if (
+        tile === TILE.GRASS
+    ) return ITEM.GRASS;
+
+    if (
+        tile === TILE.DIRT
+    ) return ITEM.DIRT;
+
+    if (
+        tile === TILE.STONE
+    ) return ITEM.STONE;
+
+    if (
+        tile === TILE.WOOD
+    ) return ITEM.WOOD;
+
+    if (
+        tile === TILE.LEAF
+    ) return ITEM.LEAF;
+
+    return ITEM.NONE;
+
+}
+
+// ================= BREAK BLOCK =================
+
+function breakBlock(
+    tx,
+    ty
+) {
+
+    const tile =
+        getTile(
+            tx,
+            ty
+        );
+
+    if (
+        tile === TILE.AIR
+    ) return;
+
+    if (
+        tile === TILE.BEDROCK
+    ) return;
+
+    // stone requires pickaxe
+
+    if (
+        tile === TILE.STONE
+    ) {
+
+        if (
+            equippedTool !==
+            TOOL.WOOD_PICKAXE
+        ) {
+
+            setTile(
+                tx,
+                ty,
+                TILE.AIR
+            );
+
+            return;
+
+        }
+
+    }
+
+    // normal drop
+
+    if (
+        tile !== TILE.LEAF
+    ) {
+
+        spawnDrop(
+
+            tx * BLOCK +
+            BLOCK / 2,
+
+            ty * BLOCK +
+            BLOCK / 2,
+
+            tileToItem(
+                tile
+            )
+
+        );
+
+    }
+
+    // leaf chance
+
+    if (
+        tile === TILE.LEAF
+    ) {
+
+        if (
+            Math.random()
+            < 0.20
+        ) {
+
+            spawnDrop(
+
+                tx * BLOCK +
+                BLOCK / 2,
+
+                ty * BLOCK +
+                BLOCK / 2,
+
+                ITEM.STICK
+
+            );
+
+        }
+
+    }
+
+    setTile(
+        tx,
+        ty,
+        TILE.AIR
+    );
+
+}
+
+// ================= MOUSE DOWN =================
 
 canvas.addEventListener(
     "mousedown",
     e => {
 
-        if (paused)
-            return;
-
-        if (inventoryOpen)
-            return;
+        if (
+            paused ||
+            inventoryOpen
+        ) return;
 
         const tx =
+
             Math.floor(
+
                 (
                     mouse.x +
                     camera.x
                 ) / BLOCK
+
             );
 
         const ty =
+
             Math.floor(
+
                 (
                     mouse.y +
                     camera.y
                 ) / BLOCK
+
             );
 
-        // ================= BREAK =================
+        // LEFT CLICK
 
         if (
             e.button === 0
         ) {
 
             if (
+
                 tileDistance(
                     tx,
                     ty
                 ) >
+
                 BREAK_RANGE
+
             ) return;
 
-            const tile =
-                getTile(
-                    tx,
-                    ty
-                );
+            miningBlock = {
 
-            if (
-                tile ===
-                TILE.AIR
-            ) return;
+                x: tx,
+                y: ty
 
-            if (
-                tile ===
-                TILE.BEDROCK
-            ) return;
+            };
 
-            // stone drops only later with tools
-            if (
-                tile !==
-                TILE.STONE
-            ) {
-
-                spawnDrop(
-
-                    tx * BLOCK +
-                    BLOCK / 2,
-
-                    ty * BLOCK +
-                    BLOCK / 2,
-
-                    tile
-
-                );
-
-            }
-
-            setTile(
-                tx,
-                ty,
-                TILE.AIR
-            );
+            miningProgress = 0;
 
         }
 
-        // ================= PLACE =================
+        // RIGHT CLICK
 
         if (
             e.button === 2
         ) {
 
             if (
+
                 tileDistance(
                     tx,
                     ty
                 ) >
-                PLACE_RANGE
+
+                BREAK_RANGE
+
             ) return;
 
             if (
+
                 getTile(
                     tx,
                     ty
                 ) !== TILE.AIR
+
             ) return;
 
             if (
+
                 playerInsideTile(
                     tx,
                     ty
                 )
+
             ) return;
 
             if (
+
                 !hasNeighbor(
                     tx,
                     ty
                 )
+
             ) return;
 
             setTile(
                 tx,
                 ty,
-                selectedBlock
+                TILE.DIRT
             );
 
         }
@@ -1268,10 +2190,114 @@ canvas.addEventListener(
     }
 );
 
+// ================= MOUSE UP =================
+
 canvas.addEventListener(
-    "contextmenu",
-    e =>
-        e.preventDefault()
+    "mouseup",
+    () => {
+
+        miningBlock =
+            null;
+
+        miningProgress =
+            0;
+
+    }
+);
+
+// ================= MINING UPDATE =================
+
+function updateMining() {
+
+    if (
+        !miningBlock
+    ) return;
+
+    const tile =
+        getTile(
+            miningBlock.x,
+            miningBlock.y
+        );
+
+    if (
+        tile === TILE.AIR
+    ) {
+
+        miningBlock =
+            null;
+
+        return;
+
+    }
+
+    miningProgress +=
+        1 / 60;
+
+    const needTime =
+        getBreakTime(
+            tile
+        );
+
+    if (
+        miningProgress >=
+        needTime
+    ) {
+
+        breakBlock(
+
+            miningBlock.x,
+
+            miningBlock.y
+
+        );
+
+        miningBlock =
+            null;
+
+        miningProgress =
+            0;
+
+    }
+
+}
+
+// ================= TOOL EQUIP =================
+
+document.addEventListener(
+    "keydown",
+    e => {
+
+        if (
+            e.code ===
+            "F1"
+        ) {
+
+            equippedTool =
+                TOOL.NONE;
+
+        }
+
+        if (
+            e.code ===
+            "F2"
+        ) {
+
+            equippedTool =
+                TOOL.WOOD_PICKAXE;
+
+        }
+
+        if (
+            e.code ===
+            "F3"
+        ) {
+
+            equippedTool =
+                TOOL.WOOD_AXE;
+
+        }
+
+    }
 );
 
 // ================= UPDATE OVERRIDE =================
@@ -1284,17 +2310,236 @@ function update() {
 
     updateDrops();
 
+    updateMining();
+
 }
-// ================= PLAYER DRAW =================
+// ======================================================
+// RENDERING + UI
+// PART 6/8
+// ======================================================
 
-function drawStickman(x, y) {
+// ================= ITEM COLORS =================
 
-    const leg =
-        Math.sin(
-            walkCycle
-        ) * 8;
+function getItemColor(item) {
 
-    const arm =
+    if (item === ITEM.GRASS)
+        return "#4CAF50";
+
+    if (item === ITEM.DIRT)
+        return "#8B5A2B";
+
+    if (item === ITEM.STONE)
+        return "#808080";
+
+    if (item === ITEM.WOOD)
+        return "#6b3e1d";
+
+    if (item === ITEM.LEAF)
+        return "#2ecc71";
+
+    if (item === ITEM.STICK)
+        return "#d2a679";
+
+    if (item === ITEM.CRAFTING_TABLE)
+        return "#8b4513";
+
+    if (item === ITEM.WOOD_PICKAXE)
+        return "#e6c38a";
+
+    if (item === ITEM.WOOD_AXE)
+        return "#c49b63";
+
+    return "#ffffff";
+
+}
+
+// ================= WORLD =================
+
+function drawWorld() {
+
+    const startX =
+        Math.floor(
+            camera.x / BLOCK
+        );
+
+    const endX =
+        startX +
+        Math.ceil(
+            canvas.width /
+            BLOCK
+        ) + 2;
+
+    const startY =
+        Math.floor(
+            camera.y / BLOCK
+        );
+
+    const endY =
+        startY +
+        Math.ceil(
+            canvas.height /
+            BLOCK
+        ) + 2;
+
+    for (
+        let y = startY;
+        y < endY;
+        y++
+    ) {
+
+        for (
+            let x = startX;
+            x < endX;
+            x++
+        ) {
+
+            if (
+                x < 0 ||
+                y < 0 ||
+                x >= WORLD_WIDTH ||
+                y >= WORLD_HEIGHT
+            ) continue;
+
+            const tile =
+                world[y][x];
+
+            if (
+                tile === TILE.AIR
+            ) continue;
+
+            if (
+                tile === TILE.GRASS
+            ) {
+                ctx.fillStyle =
+                    "#4CAF50";
+            }
+
+            if (
+                tile === TILE.DIRT
+            ) {
+                ctx.fillStyle =
+                    "#8B5A2B";
+            }
+
+            if (
+                tile === TILE.STONE
+            ) {
+                ctx.fillStyle =
+                    "#777777";
+            }
+
+            if (
+                tile === TILE.WOOD
+            ) {
+                ctx.fillStyle =
+                    "#6b3e1d";
+            }
+
+            if (
+                tile === TILE.LEAF
+            ) {
+                ctx.fillStyle =
+                    "#2ecc71";
+            }
+
+            if (
+                tile === TILE.BEDROCK
+            ) {
+                ctx.fillStyle =
+                    "#111111";
+            }
+
+            ctx.fillRect(
+
+                x * BLOCK -
+                camera.x,
+
+                y * BLOCK -
+                camera.y,
+
+                BLOCK,
+                BLOCK
+
+            );
+
+            ctx.strokeStyle =
+                "rgba(0,0,0,0.15)";
+
+            ctx.strokeRect(
+
+                x * BLOCK -
+                camera.x,
+
+                y * BLOCK -
+                camera.y,
+
+                BLOCK,
+                BLOCK
+
+            );
+
+        }
+
+    }
+
+}
+
+// ================= DROPS =================
+
+function drawDrops() {
+
+    for (
+        const drop
+        of droppedItems
+    ) {
+
+        ctx.fillStyle =
+            getItemColor(
+                drop.item
+            );
+
+        ctx.fillRect(
+
+            drop.x -
+            camera.x - 8,
+
+            drop.y -
+            camera.y - 8,
+
+            16,
+            16
+
+        );
+
+        ctx.strokeStyle =
+            "black";
+
+        ctx.strokeRect(
+
+            drop.x -
+            camera.x - 8,
+
+            drop.y -
+            camera.y - 8,
+
+            16,
+            16
+
+        );
+
+    }
+
+}
+
+// ================= STICKMAN =================
+
+function drawStickman(
+    x,
+    y
+) {
+
+    const legOffset =
+
         Math.sin(
             walkCycle
         ) * 6;
@@ -1340,7 +2585,7 @@ function drawStickman(x, y) {
     );
 
     ctx.lineTo(
-        x + 12 - arm,
+        x,
         y + 30
     );
 
@@ -1350,7 +2595,7 @@ function drawStickman(x, y) {
     );
 
     ctx.lineTo(
-        x + 12 + arm,
+        x + 24,
         y + 30
     );
 
@@ -1362,8 +2607,9 @@ function drawStickman(x, y) {
     );
 
     ctx.lineTo(
-        x + 4 + leg,
-        y + 50
+        x + 4,
+        y + 50 +
+        legOffset
     );
 
     ctx.moveTo(
@@ -1372,232 +2618,16 @@ function drawStickman(x, y) {
     );
 
     ctx.lineTo(
-        x + 20 - leg,
-        y + 50
+        x + 20,
+        y + 50 -
+        legOffset
     );
 
     ctx.stroke();
 
-    // eye
-
-    ctx.fillStyle =
-        "black";
-
-    const eyeX =
-
-        player.direction === 1
-
-        ?
-
-        x + 15
-
-        :
-
-        x + 9;
-
-    ctx.beginPath();
-
-    ctx.arc(
-        eyeX,
-        y + 8,
-        1.5,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
 }
 
-// ================= WORLD DRAW =================
-
-function drawWorld() {
-
-    const startX =
-
-        Math.floor(
-            camera.x / BLOCK
-        );
-
-    const endX =
-
-        startX +
-
-        Math.ceil(
-            canvas.width / BLOCK
-        ) + 2;
-
-    const startY =
-
-        Math.floor(
-            camera.y / BLOCK
-        );
-
-    const endY =
-
-        startY +
-
-        Math.ceil(
-            canvas.height / BLOCK
-        ) + 2;
-
-    for (
-        let y = startY;
-        y < endY;
-        y++
-    ) {
-
-        for (
-            let x = startX;
-            x < endX;
-            x++
-        ) {
-
-            if (
-
-                x < 0 ||
-                y < 0 ||
-
-                x >= WORLD_WIDTH ||
-                y >= WORLD_HEIGHT
-
-            ) continue;
-
-            const tile =
-                world[y][x];
-
-            if (
-                tile === TILE.AIR
-            ) continue;
-
-            if (
-                tile === TILE.GRASS
-            )
-                ctx.fillStyle =
-                    "#4CAF50";
-
-            if (
-                tile === TILE.DIRT
-            )
-                ctx.fillStyle =
-                    "#8B5A2B";
-
-            if (
-                tile === TILE.STONE
-            )
-                ctx.fillStyle =
-                    "#777777";
-
-            if (
-                tile === TILE.WOOD
-            )
-                ctx.fillStyle =
-                    "#6b3e1d";
-
-            if (
-                tile === TILE.LEAF
-            )
-                ctx.fillStyle =
-                    "#2ecc71";
-
-            if (
-                tile === TILE.BEDROCK
-            )
-                ctx.fillStyle =
-                    "#222";
-
-            ctx.fillRect(
-
-                x * BLOCK -
-                camera.x,
-
-                y * BLOCK -
-                camera.y,
-
-                BLOCK,
-                BLOCK
-
-            );
-
-            ctx.strokeStyle =
-                "rgba(0,0,0,0.1)";
-
-            ctx.strokeRect(
-
-                x * BLOCK -
-                camera.x,
-
-                y * BLOCK -
-                camera.y,
-
-                BLOCK,
-                BLOCK
-
-            );
-
-        }
-
-    }
-
-}
-
-// ================= DROPS DRAW =================
-
-function drawDrops() {
-
-    for (
-        const item
-        of droppedItems
-    ) {
-
-        if (
-            item.tile === TILE.GRASS
-        )
-            ctx.fillStyle =
-                "#4CAF50";
-
-        if (
-            item.tile === TILE.DIRT
-        )
-            ctx.fillStyle =
-                "#8B5A2B";
-
-        if (
-            item.tile === TILE.STONE
-        )
-            ctx.fillStyle =
-                "#777777";
-
-        if (
-            item.tile === TILE.WOOD
-        )
-            ctx.fillStyle =
-                "#6b3e1d";
-
-        if (
-            item.tile === TILE.LEAF
-        )
-            ctx.fillStyle =
-                "#2ecc71";
-
-        ctx.fillRect(
-
-            item.x -
-            camera.x - 6,
-
-            item.y -
-            camera.y - 6,
-
-            12,
-            12
-
-        );
-
-    }
-
-}
-
-// ================= HEALTH BAR =================
+// ================= HEALTH =================
 
 function drawHealthBar() {
 
@@ -1605,10 +2635,10 @@ function drawHealthBar() {
         "rgba(0,0,0,0.4)";
 
     ctx.fillRect(
-        15,
-        15,
-        220,
-        30
+        20,
+        20,
+        240,
+        28
     );
 
     ctx.fillStyle =
@@ -1616,15 +2646,15 @@ function drawHealthBar() {
 
     ctx.fillRect(
 
-        15,
-        15,
+        20,
+        20,
 
         (
             playerHealth.current /
             playerHealth.max
-        ) * 220,
+        ) * 240,
 
-        30
+        28
 
     );
 
@@ -1632,10 +2662,28 @@ function drawHealthBar() {
         "black";
 
     ctx.strokeRect(
-        15,
-        15,
-        220,
-        30
+        20,
+        20,
+        240,
+        28
+    );
+
+    ctx.fillStyle =
+        "white";
+
+    ctx.font =
+        "16px Arial";
+
+    ctx.fillText(
+
+        "HP: " +
+        playerHealth.current +
+        "/" +
+        playerHealth.max,
+
+        30,
+        39
+
     );
 
 }
@@ -1644,44 +2692,33 @@ function drawHealthBar() {
 
 function drawHotbar() {
 
-    const slots =
-        [1,2,3,4,5];
-
-    const size = 55;
+    const size = 50;
 
     const startX =
 
         canvas.width / 2 -
 
-        (
-            slots.length *
-            size
-        ) / 2;
+        (9 * size) / 2;
 
     const y =
-        canvas.height - 80;
+        canvas.height - 70;
 
     for (
         let i = 0;
-        i < slots.length;
+        i < 9;
         i++
     ) {
 
-        const block =
-            slots[i];
+        const slot =
+            inventory[i];
 
         ctx.fillStyle =
 
-            block ===
-            selectedBlock
+            i === selectedSlot
 
-            ?
+            ? "#ffe066"
 
-            "#ffe066"
-
-            :
-
-            "#444";
+            : "#444";
 
         ctx.fillRect(
 
@@ -1690,45 +2727,81 @@ function drawHotbar() {
 
             y,
 
-            50,
-            50
+            48,
+            48
 
         );
 
-        if (block === 1)
+        if (
+            slot.item !==
+            ITEM.NONE
+        ) {
+
             ctx.fillStyle =
-                "#4CAF50";
+                getItemColor(
+                    slot.item
+                );
 
-        if (block === 2)
+            ctx.fillRect(
+
+                startX +
+                i * size +
+                8,
+
+                y + 8,
+
+                30,
+                30
+
+            );
+
             ctx.fillStyle =
-                "#8B5A2B";
+                "white";
 
-        if (block === 3)
-            ctx.fillStyle =
-                "#777777";
+            ctx.font =
+                "12px Arial";
 
-        if (block === 4)
-            ctx.fillStyle =
-                "#6b3e1d";
+            ctx.fillText(
 
-        if (block === 5)
-            ctx.fillStyle =
-                "#2ecc71";
+                slot.count,
 
-        ctx.fillRect(
+                startX +
+                i * size +
+                28,
 
-            startX +
-            i * size +
-            8,
+                y + 44
 
-            y + 8,
+            );
 
-            34,
-            34
-
-        );
+        }
 
     }
+
+}
+// ======================================================
+// INVENTORY UI + CRAFTING UI + PAUSE MENU
+// PART 7/8
+// ======================================================
+
+// ================= TOOL NAME =================
+
+function getToolName() {
+
+    if (
+        equippedTool ===
+        TOOL.WOOD_PICKAXE
+    ) {
+        return "Wood Pickaxe";
+    }
+
+    if (
+        equippedTool ===
+        TOOL.WOOD_AXE
+    ) {
+        return "Wood Axe";
+    }
+
+    return "Hand";
 
 }
 
@@ -1741,79 +2814,308 @@ function drawInventory() {
     ) return;
 
     ctx.fillStyle =
-        "rgba(0,0,0,0.85)";
+        "rgba(0,0,0,0.75)";
 
     ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
-        canvas.width / 2 - 250,
-        canvas.height / 2 - 180,
+    const cols = 9;
+    const rows = 4;
 
-        500,
-        360
+    const slotSize = 60;
 
+    const startX =
+
+        canvas.width / 2 -
+
+        (
+            cols *
+            slotSize
+        ) / 2;
+
+    const startY = 120;
+
+    ctx.fillStyle =
+        "white";
+
+    ctx.font =
+        "32px Arial";
+
+    ctx.fillText(
+        "Inventory",
+        startX,
+        70
+    );
+
+    let slotIndex = 0;
+
+    for (
+        let row = 0;
+        row < rows;
+        row++
+    ) {
+
+        for (
+            let col = 0;
+            col < cols;
+            col++
+        ) {
+
+            const slot =
+                inventory[
+                    slotIndex
+                ];
+
+            const x =
+
+                startX +
+                col *
+                slotSize;
+
+            const y =
+
+                startY +
+                row *
+                slotSize;
+
+            ctx.fillStyle =
+                "#555";
+
+            ctx.fillRect(
+                x,
+                y,
+                54,
+                54
+            );
+
+            ctx.strokeStyle =
+                "black";
+
+            ctx.strokeRect(
+                x,
+                y,
+                54,
+                54
+            );
+
+            if (
+                slot.item !==
+                ITEM.NONE
+            ) {
+
+                ctx.fillStyle =
+                    getItemColor(
+                        slot.item
+                    );
+
+                ctx.fillRect(
+                    x + 8,
+                    y + 8,
+                    36,
+                    36
+                );
+
+                ctx.fillStyle =
+                    "white";
+
+                ctx.font =
+                    "12px Arial";
+
+                ctx.fillText(
+                    slot.count,
+                    x + 30,
+                    y + 48
+                );
+
+            }
+
+            slotIndex++;
+
+        }
+
+    }
+
+}
+
+// ================= CRAFTING =================
+
+function drawCraftingUI() {
+
+    if (
+        !inventoryOpen
+    ) return;
+
+    const x =
+        80;
+
+    const y =
+        canvas.height - 260;
+
+    ctx.fillStyle =
+        "rgba(40,40,40,0.9)";
+
+    ctx.fillRect(
+        x,
+        y,
+        520,
+        180
     );
 
     ctx.fillStyle =
         "white";
 
     ctx.font =
-        "28px Arial";
+        "24px Arial";
 
     ctx.fillText(
-
-        "Inventory",
-
-        canvas.width / 2 - 60,
-
-        canvas.height / 2 - 130
-
+        "Crafting",
+        x + 15,
+        y + 35
     );
 
     ctx.font =
-        "22px Arial";
+        "18px Arial";
 
     ctx.fillText(
-        "Grass: " +
-        inventory.grass,
-        canvas.width / 2 - 180,
-        canvas.height / 2 - 60
+        "[R] Stick (2 Wood)",
+        x + 20,
+        y + 70
     );
 
     ctx.fillText(
-        "Dirt: " +
-        inventory.dirt,
-        canvas.width / 2 - 180,
-        canvas.height / 2 - 20
+        "[T] Crafting Table (4 Wood)",
+        x + 20,
+        y + 100
     );
 
     ctx.fillText(
-        "Stone: " +
-        inventory.stone,
-        canvas.width / 2 - 180,
-        canvas.height / 2 + 20
+        "[P] Wooden Pickaxe",
+        x + 20,
+        y + 130
     );
 
     ctx.fillText(
-        "Wood: " +
-        inventory.wood,
-        canvas.width / 2 - 180,
-        canvas.height / 2 + 60
-    );
-
-    ctx.fillText(
-        "Leaf: " +
-        inventory.leaf,
-        canvas.width / 2 - 180,
-        canvas.height / 2 + 100
+        "[X] Wooden Axe",
+        x + 20,
+        y + 160
     );
 
 }
-// ================= PAUSE MENU =================
+
+// ================= TOOL HUD =================
+
+function drawToolHUD() {
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.5)";
+
+    ctx.fillRect(
+        canvas.width - 260,
+        20,
+        240,
+        40
+    );
+
+    ctx.fillStyle =
+        "white";
+
+    ctx.font =
+        "18px Arial";
+
+    ctx.fillText(
+
+        "Tool: " +
+        getToolName(),
+
+        canvas.width - 245,
+        46
+
+    );
+
+}
+
+// ================= MINING BAR =================
+
+function drawMiningBar() {
+
+    if (
+        !miningBlock
+    ) return;
+
+    const tile =
+        getTile(
+            miningBlock.x,
+            miningBlock.y
+        );
+
+    const totalTime =
+        getBreakTime(
+            tile
+        );
+
+    const percent =
+
+        Math.min(
+
+            miningProgress /
+            totalTime,
+
+            1
+
+        );
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.6)";
+
+    ctx.fillRect(
+        canvas.width / 2 - 120,
+        20,
+        240,
+        25
+    );
+
+    ctx.fillStyle =
+        "#ffe066";
+
+    ctx.fillRect(
+
+        canvas.width / 2 - 120,
+
+        20,
+
+        240 *
+        percent,
+
+        25
+
+    );
+
+    ctx.strokeStyle =
+        "black";
+
+    ctx.strokeRect(
+        canvas.width / 2 - 120,
+        20,
+        240,
+        25
+    );
+
+}
+
+// ================= PAUSE =================
 
 function drawPauseMenu() {
 
+    if (
+        !paused
+    ) return;
+
     ctx.fillStyle =
-        "rgba(0,0,0,0.65)";
+        "rgba(0,0,0,0.7)";
 
     ctx.fillRect(
         0,
@@ -1829,56 +3131,124 @@ function drawPauseMenu() {
         "center";
 
     ctx.font =
-        "60px Arial";
+        "64px Arial";
 
     ctx.fillText(
+
         "PAUSED",
+
         canvas.width / 2,
-        canvas.height / 2 - 60
+
+        canvas.height / 2 - 80
+
     );
 
     ctx.font =
-        "24px Arial";
+        "26px Arial";
 
     ctx.fillText(
+
         "ESC = Resume",
+
         canvas.width / 2,
-        canvas.height / 2 + 10
+
+        canvas.height / 2
+
     );
 
     ctx.fillText(
+
         "E = Inventory",
+
         canvas.width / 2,
+
         canvas.height / 2 + 50
+
+    );
+
+    ctx.fillText(
+
+        "Modern Blocks v0.7",
+
+        canvas.width / 2,
+
+        canvas.height / 2 + 110
+
     );
 
     ctx.textAlign =
         "left";
 
 }
+// ======================================================
+// MAIN DRAW + GAME LOOP
+// PART 8/8
+// ======================================================
 
 // ================= FPS =================
 
-function updateFPS() {
+function drawFPS() {
 
-    frames++;
+    ctx.fillStyle =
+        "black";
 
-    const now =
-        performance.now();
+    ctx.font =
+        "20px Arial";
 
-    if (
-        now -
-        lastFpsTime >=
-        1000
-    ) {
+    ctx.fillText(
+        "FPS: " + fps,
+        20,
+        80
+    );
 
-        fps = frames;
+}
 
-        frames = 0;
+// ================= SKY =================
 
-        lastFpsTime = now;
+function drawSky() {
 
-    }
+    ctx.fillStyle =
+        "#87CEEB";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+}
+
+// ================= CROSSHAIR =================
+
+function drawCrosshair() {
+
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.5)";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        mouse.x - 10,
+        mouse.y
+    );
+
+    ctx.lineTo(
+        mouse.x + 10,
+        mouse.y
+    );
+
+    ctx.moveTo(
+        mouse.x,
+        mouse.y - 10
+    );
+
+    ctx.lineTo(
+        mouse.x,
+        mouse.y + 10
+    );
+
+    ctx.stroke();
 
 }
 
@@ -1893,86 +3263,49 @@ function draw() {
         canvas.height
     );
 
-    // sky
-
-    ctx.fillStyle =
-        "#87CEEB";
-
-    ctx.fillRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-    );
-
-    // world
+    drawSky();
 
     drawWorld();
 
-    // drops
-
     drawDrops();
 
-    // player
-
     drawStickman(
+
         player.x -
         camera.x,
 
         player.y -
         camera.y
+
     );
 
-    // ui
+    drawCrosshair();
 
     drawHealthBar();
 
     drawHotbar();
 
+    drawToolHUD();
+
+    drawMiningBar();
+
     drawInventory();
 
-    // fps
+    drawCraftingUI();
 
-    ctx.fillStyle =
-        "black";
+    drawPauseMenu();
 
-    ctx.font =
-        "18px Arial";
-
-    ctx.fillText(
-        "FPS: " + fps,
-        20,
-        80
-    );
-
-    ctx.fillText(
-        "Drops: " +
-        droppedItems.length,
-        20,
-        105
-    );
-
-    // version
-
-    ctx.fillText(
-        "Modern Blocks v0.6",
-        20,
-        130
-    );
-
-    if (paused) {
-
-        drawPauseMenu();
-
-    }
+    drawFPS();
 
 }
 
-// ================= GAME LOOP =================
+// ================= LOOP =================
 
 function gameLoop() {
 
-    if (!paused) {
+    if (
+        !paused
+    ) {
 
         update();
 
@@ -1980,7 +3313,28 @@ function gameLoop() {
 
     draw();
 
-    updateFPS();
+    frames++;
+
+    const now =
+        performance.now();
+
+    if (
+
+        now -
+        lastFpsTime >=
+        1000
+
+    ) {
+
+        fps =
+            frames;
+
+        frames = 0;
+
+        lastFpsTime =
+            now;
+
+    }
 
     requestAnimationFrame(
         gameLoop
