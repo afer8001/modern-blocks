@@ -54,22 +54,41 @@ document.addEventListener(
 
         keys[e.code] = true;
 
-        if (
-            e.code === "Escape"
-        ) {
+if (e.code === "KeyE") {
 
-            paused = !paused;
+    if (paused) {
 
-        }
+        paused = false;
 
-        if (
-            e.code === "KeyE"
-        ) {
+        inventoryOpen = true;
 
-            inventoryOpen =
-                !inventoryOpen;
+    }
 
-        }
+    else {
+
+        inventoryOpen = !inventoryOpen;
+
+    }
+
+}
+
+if (e.code === "Escape") {
+
+    if (inventoryOpen) {
+
+        inventoryOpen = false;
+
+        paused = true;
+
+    }
+
+    else {
+
+        paused = !paused;
+
+    }
+
+}
 
     }
 );
