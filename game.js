@@ -1513,9 +1513,7 @@ function spawnDrop(
         x: x,
         y: y,
 
-        vx:
-            (Math.random() - 0.5)
-            * 2,
+       vx: 0,
 
         vy: -3,
 
@@ -1557,7 +1555,7 @@ function updateDrops() {
 
         drop.x +=
             drop.vx;
-
+drop.vx *= 0.8;
         drop.y +=
             drop.vy;
 
@@ -1587,7 +1585,7 @@ function updateDrops() {
             )
 
         ) {
-
+drop.vx = 0;
             drop.y =
                 ty * BLOCK - 8;
 
