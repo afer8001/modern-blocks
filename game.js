@@ -22,7 +22,17 @@ let settings = JSON.parse(
 
 const keys = {};
 
+let jumpPressed = false;
+
 document.addEventListener("keydown", e => {
+
+    if (!keys[e.code]) {
+
+        if (e.code === settings.jump) {
+            jumpPressed = true;
+        }
+
+    }
 
     keys[e.code] = true;
 
@@ -33,8 +43,11 @@ document.addEventListener("keydown", e => {
 });
 
 document.addEventListener("keyup", e => {
+
     keys[e.code] = false;
+
 });
+
 
 // ================= MOUSE =================
 
@@ -45,10 +58,14 @@ const mouse = {
 
 canvas.addEventListener("mousemove", e => {
 
-    const rect = canvas.getBoundingClientRect();
+    const rect =
+        canvas.getBoundingClientRect();
 
-    mouse.x = e.clientX - rect.left;
-    mouse.y = e.clientY - rect.top;
+    mouse.x =
+        e.clientX - rect.left;
+
+    mouse.y =
+        e.clientY - rect.top;
 
 });
 
@@ -66,11 +83,13 @@ let world = [];
 // ================= INVENTORY =================
 
 const inventory = {
+
     grass: 999,
     dirt: 999,
     stone: 999,
     wood: 999,
     leaf: 999
+
 };
 
 let selectedBlock = 2;
@@ -78,8 +97,10 @@ let selectedBlock = 2;
 // ================= HEALTH =================
 
 const playerHealth = {
+
     max: 100,
     current: 100
+
 };
 
 // ================= CAMERA =================
@@ -92,8 +113,10 @@ const camera = {
 // ================= PLAYER =================
 
 const spawnPoint = {
+
     x: 500,
     y: 200
+
 };
 
 const player = {
@@ -110,9 +133,13 @@ const player = {
     speed: 4,
     jumpPower: 14,
 
+    direction: 1,
+
     onGround: false
 
 };
+
+let walkCycle = 0;
 
 const gravity = 0.7;
 
@@ -125,19 +152,27 @@ for (let y = 0; y < WORLD_HEIGHT; y++) {
     for (let x = 0; x < WORLD_WIDTH; x++) {
 
         if (y < 20) {
+
             world[y][x] = 0;
+
         }
 
         else if (y === 20) {
+
             world[y][x] = 1;
+
         }
 
         else if (y < 28) {
+
             world[y][x] = 2;
+
         }
 
         else {
+
             world[y][x] = 3;
+
         }
 
     }
@@ -146,7 +181,11 @@ for (let y = 0; y < WORLD_HEIGHT; y++) {
 
 // ================= TREES =================
 
-for (let t = 8; t < WORLD_WIDTH; t += 18) {
+for (
+    let t = 8;
+    t < WORLD_WIDTH;
+    t += 18
+) {
 
     const baseY = 19;
 
@@ -181,14 +220,20 @@ function getTile(tx, ty) {
         tx >= WORLD_WIDTH ||
         ty >= WORLD_HEIGHT
     ) {
+
         return 3;
+
     }
 
     return world[ty][tx];
 
 }
 
-function setTile(tx, ty, value) {
+function setTile(
+    tx,
+    ty,
+    value
+) {
 
     if (
         tx < 0 ||
@@ -204,10 +249,13 @@ function setTile(tx, ty, value) {
 function isSolid(tile) {
 
     return (
+
         tile === 1 ||
         tile === 2 ||
         tile === 3 ||
-        tile === 4
+        tile === 4 ||
+        tile === 5
+
     );
 
 }
@@ -244,6 +292,7 @@ function damage(amount) {
     }
 
 }
+
 // ================= COLLISION =================
 
 function collideAt(x, y) {
@@ -253,7 +302,11 @@ function collideAt(x, y) {
 
     const right =
         Math.floor(
-            (x + player.width - 1) / BLOCK
+            (
+                x +
+                player.width -
+                1
+            ) / BLOCK
         );
 
     const top =
@@ -261,7 +314,11 @@ function collideAt(x, y) {
 
     const bottom =
         Math.floor(
-            (y + player.height - 1) / BLOCK
+            (
+                y +
+                player.height -
+                1
+            ) / BLOCK
         );
 
     return (
@@ -285,42 +342,172 @@ function collideAt(x, y) {
     );
 
 }
+// ================= RANGE =================
+
+const BREAK_RANGE = 6;
+const PLACE_RANGE = 6;
+
+// ================= PLAYER BLOCK CHECK =================
+
+function playerIntersectsTile(tx, ty) {
+
+    const px1 = player.x;
+    const py1 = player.y;
+
+    const px2 =
+        player.x + player.width;
+
+    const py2 =
+        player.y + player.height;
+
+    const bx1 = tx * BLOCK;
+    const by1 = ty * BLOCK;
+
+    const bx2 = bx1 + BLOCK;
+    const by2 = by1 + BLOCK;
+
+    return (
+
+        px1 < bx2 &&
+        px2 > bx1 &&
+        py1 < by2 &&
+        py2 > by1
+
+    );
+
+}
+
+// ================= DISTANCE =================
+
+function tileDistance(tx, ty) {
+
+    const playerTileX =
+        Math.floor(
+            (
+                player.x +
+                player.width / 2
+            ) / BLOCK
+        );
+
+    const playerTileY =
+        Math.floor(
+            (
+                player.y +
+                player.height / 2
+            ) / BLOCK
+        );
+
+    const dx =
+        tx - playerTileX;
+
+    const dy =
+        ty - playerTileY;
+
+    return Math.sqrt(
+        dx * dx +
+        dy * dy
+    );
+
+}
+
+// ================= HAS NEIGHBOR =================
+
+function hasNeighbor(tx, ty) {
+
+    return (
+
+        getTile(
+            tx + 1,
+            ty
+        ) !== 0 ||
+
+        getTile(
+            tx - 1,
+            ty
+        ) !== 0 ||
+
+        getTile(
+            tx,
+            ty + 1
+        ) !== 0 ||
+
+        getTile(
+            tx,
+            ty - 1
+        ) !== 0
+
+    );
+
+}
 
 // ================= UPDATE =================
 
 function update() {
 
-    // hotbar keys
+    if (keys["Digit1"])
+        selectedBlock = 1;
 
-    if (keys["Digit1"]) selectedBlock = 1;
-    if (keys["Digit2"]) selectedBlock = 2;
-    if (keys["Digit3"]) selectedBlock = 3;
-    if (keys["Digit4"]) selectedBlock = 4;
-    if (keys["Digit5"]) selectedBlock = 5;
+    if (keys["Digit2"])
+        selectedBlock = 2;
+
+    if (keys["Digit3"])
+        selectedBlock = 3;
+
+    if (keys["Digit4"])
+        selectedBlock = 4;
+
+    if (keys["Digit5"])
+        selectedBlock = 5;
 
     player.vx = 0;
 
     if (keys[settings.left]) {
-        player.vx = -player.speed;
+
+        player.vx =
+            -player.speed;
+
+        player.direction =
+            -1;
+
     }
 
     if (keys[settings.right]) {
-        player.vx = player.speed;
+
+        player.vx =
+            player.speed;
+
+        player.direction =
+            1;
+
     }
 
+    // ================= JUMP FIX =================
+
     if (
-        keys[settings.jump] &&
+        jumpPressed &&
         player.onGround
     ) {
 
         player.vy =
             -player.jumpPower;
 
-        player.onGround = false;
+        player.onGround =
+            false;
+
+        jumpPressed =
+            false;
 
     }
 
-    // ================= X COLLISION =================
+    if (
+        Math.abs(player.vx) > 0
+    ) {
+
+        walkCycle += 0.18;
+
+    }
+
+    // ================= X =================
 
     player.x += player.vx;
 
@@ -331,40 +518,65 @@ function update() {
         )
     ) {
 
-        if (player.vx > 0) {
+        if (
+            player.vx > 0
+        ) {
 
             player.x =
+
                 Math.floor(
-                    (player.x +
-                     player.width) / BLOCK
+
+                    (
+                        player.x +
+                        player.width
+                    ) / BLOCK
+
                 ) * BLOCK
-                - player.width - 1;
+
+                -
+
+                player.width
+
+                -
+
+                1;
 
         }
 
-        else if (player.vx < 0) {
+        else if (
+            player.vx < 0
+        ) {
 
             player.x =
+
                 Math.floor(
-                    player.x / BLOCK
-                ) * BLOCK + BLOCK;
+
+                    player.x /
+                    BLOCK
+
+                ) * BLOCK
+
+                +
+
+                BLOCK;
 
         }
 
     }
 
-    // ================= GRAVITY =================
+    // ================= Y =================
 
     player.vy += gravity;
 
-    if (player.vy > 20)
+    if (
+        player.vy > 20
+    ) {
         player.vy = 20;
+    }
 
     player.y += player.vy;
 
     player.onGround = false;
-
-    // ================= Y COLLISION =================
 
     if (
         collideAt(
@@ -373,27 +585,48 @@ function update() {
         )
     ) {
 
-        if (player.vy > 0) {
+        if (
+            player.vy > 0
+        ) {
 
             player.y =
+
                 Math.floor(
-                    (player.y +
-                     player.height) / BLOCK
+
+                    (
+                        player.y +
+                        player.height
+                    ) / BLOCK
+
                 ) * BLOCK
-                - player.height;
+
+                -
+
+                player.height;
 
             player.vy = 0;
 
-            player.onGround = true;
+            player.onGround =
+                true;
 
         }
 
-        else if (player.vy < 0) {
+        else if (
+            player.vy < 0
+        ) {
 
             player.y =
+
                 Math.floor(
-                    player.y / BLOCK
-                ) * BLOCK + BLOCK;
+
+                    player.y /
+                    BLOCK
+
+                ) * BLOCK
+
+                +
+
+                BLOCK;
 
             player.vy = 0;
 
@@ -403,21 +636,40 @@ function update() {
 
     // ================= WORLD LIMITS =================
 
-    if (player.x < 0)
+    if (
+        player.x < 0
+    ) {
         player.x = 0;
+    }
 
     const maxX =
-        WORLD_WIDTH * BLOCK
-        - player.width;
 
-    if (player.x > maxX)
+        WORLD_WIDTH *
+        BLOCK
+
+        -
+
+        player.width;
+
+    if (
+        player.x > maxX
+    ) {
         player.x = maxX;
+    }
 
     // ================= VOID =================
 
     if (
+
         player.y >
-        WORLD_HEIGHT * BLOCK + 500
+
+        WORLD_HEIGHT *
+        BLOCK
+
+        +
+
+        500
+
     ) {
 
         damage(999);
@@ -427,36 +679,58 @@ function update() {
     // ================= CAMERA =================
 
     camera.x =
-        player.x -
+
+        player.x
+
+        -
+
         canvas.width / 2;
 
     camera.y =
-        player.y -
+
+        player.y
+
+        -
+
         canvas.height / 2;
 
     const maxCamX =
-        WORLD_WIDTH * BLOCK
-        - canvas.width;
+
+        WORLD_WIDTH *
+        BLOCK
+
+        -
+
+        canvas.width;
 
     const maxCamY =
-        WORLD_HEIGHT * BLOCK
-        - canvas.height;
 
-    if (camera.x < 0)
-        camera.x = 0;
+        WORLD_HEIGHT *
+        BLOCK
 
-    if (camera.y < 0)
-        camera.y = 0;
+        -
 
-    if (camera.x > maxCamX)
-        camera.x = maxCamX;
+        canvas.height;
 
-    if (camera.y > maxCamY)
-        camera.y = maxCamY;
+    if (
+        camera.x < 0
+    ) camera.x = 0;
+
+    if (
+        camera.y < 0
+    ) camera.y = 0;
+
+    if (
+        camera.x > maxCamX
+    ) camera.x = maxCamX;
+
+    if (
+        camera.y > maxCamY
+    ) camera.y = maxCamY;
 
 }
 
-// ================= BLOCK BREAK =================
+// ================= BLOCK EVENTS =================
 
 canvas.addEventListener(
     "mousedown",
@@ -465,30 +739,56 @@ canvas.addEventListener(
         if (paused) return;
 
         const worldX =
+
             Math.floor(
-                (mouse.x + camera.x)
-                / BLOCK
+
+                (
+                    mouse.x +
+                    camera.x
+                ) / BLOCK
+
             );
 
         const worldY =
+
             Math.floor(
-                (mouse.y + camera.y)
-                / BLOCK
+
+                (
+                    mouse.y +
+                    camera.y
+                ) / BLOCK
+
             );
 
-        // left click
+        // BREAK
 
-        if (e.button === 0) {
+        if (
+            e.button === 0
+        ) {
+
+            if (
+
+                tileDistance(
+                    worldX,
+                    worldY
+                ) >
+
+                BREAK_RANGE
+
+            ) return;
 
             const tile =
+
                 getTile(
                     worldX,
                     worldY
                 );
 
             if (
+
                 tile !== 0 &&
                 tile !== 1
+
             ) {
 
                 setTile(
@@ -501,24 +801,55 @@ canvas.addEventListener(
 
         }
 
-        // right click
+        // PLACE
 
-        if (e.button === 2) {
+        if (
+            e.button === 2
+        ) {
 
             if (
+
+                tileDistance(
+                    worldX,
+                    worldY
+                ) >
+
+                PLACE_RANGE
+
+            ) return;
+
+            if (
+
                 getTile(
                     worldX,
                     worldY
-                ) === 0
-            ) {
+                ) !== 0
 
-                setTile(
+            ) return;
+
+            if (
+
+                playerIntersectsTile(
                     worldX,
-                    worldY,
-                    selectedBlock
-                );
+                    worldY
+                )
 
-            }
+            ) return;
+
+            if (
+
+                !hasNeighbor(
+                    worldX,
+                    worldY
+                )
+
+            ) return;
+
+            setTile(
+                worldX,
+                worldY,
+                selectedBlock
+            );
 
         }
 
@@ -533,10 +864,19 @@ canvas.addEventListener(
 
 function drawStickman(x, y) {
 
+    const legAnim =
+        Math.sin(walkCycle) * 8;
+
+    const armAnim =
+        Math.sin(walkCycle) * 6;
+
     ctx.strokeStyle = "black";
     ctx.lineWidth = 3;
 
+    // head
+
     ctx.beginPath();
+
     ctx.arc(
         x + 12,
         y + 10,
@@ -544,26 +884,89 @@ function drawStickman(x, y) {
         0,
         Math.PI * 2
     );
+
     ctx.stroke();
+
+    // body
 
     ctx.beginPath();
 
-    ctx.moveTo(x + 12, y + 18);
-    ctx.lineTo(x + 12, y + 35);
+    ctx.moveTo(
+        x + 12,
+        y + 18
+    );
 
-    ctx.moveTo(x + 12, y + 24);
-    ctx.lineTo(x, y + 30);
+    ctx.lineTo(
+        x + 12,
+        y + 35
+    );
 
-    ctx.moveTo(x + 12, y + 24);
-    ctx.lineTo(x + 24, y + 30);
+    // arms
 
-    ctx.moveTo(x + 12, y + 35);
-    ctx.lineTo(x + 4, y + 50);
+    ctx.moveTo(
+        x + 12,
+        y + 24
+    );
 
-    ctx.moveTo(x + 12, y + 35);
-    ctx.lineTo(x + 20, y + 50);
+    ctx.lineTo(
+        x + 12 - armAnim,
+        y + 30
+    );
+
+    ctx.moveTo(
+        x + 12,
+        y + 24
+    );
+
+    ctx.lineTo(
+        x + 12 + armAnim,
+        y + 30
+    );
+
+    // legs
+
+    ctx.moveTo(
+        x + 12,
+        y + 35
+    );
+
+    ctx.lineTo(
+        x + 4 + legAnim,
+        y + 50
+    );
+
+    ctx.moveTo(
+        x + 12,
+        y + 35
+    );
+
+    ctx.lineTo(
+        x + 20 - legAnim,
+        y + 50
+    );
 
     ctx.stroke();
+
+    // direction eye
+
+    ctx.fillStyle = "black";
+
+    const eyeX =
+        player.direction === 1
+        ? x + 15
+        : x + 9;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        eyeX,
+        y + 8,
+        1.5,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
 
 }
 
@@ -615,24 +1018,19 @@ function drawWorld() {
                 continue;
 
             if (tile === 1)
-                ctx.fillStyle =
-                    "#4CAF50";
+                ctx.fillStyle = "#4CAF50";
 
             if (tile === 2)
-                ctx.fillStyle =
-                    "#8B5A2B";
+                ctx.fillStyle = "#8B5A2B";
 
             if (tile === 3)
-                ctx.fillStyle =
-                    "#777777";
+                ctx.fillStyle = "#777777";
 
             if (tile === 4)
-                ctx.fillStyle =
-                    "#6b3e1d";
+                ctx.fillStyle = "#6b3e1d";
 
             if (tile === 5)
-                ctx.fillStyle =
-                    "#2ecc71";
+                ctx.fillStyle = "#2ecc71";
 
             ctx.fillRect(
                 x * BLOCK - camera.x,
@@ -657,7 +1055,7 @@ function drawWorld() {
 
 }
 
-// ================= UI =================
+// ================= HEALTH =================
 
 function drawHealthBar() {
 
@@ -694,38 +1092,27 @@ function drawHealthBar() {
         30
     );
 
-    ctx.fillStyle =
-        "white";
-
-    ctx.font =
-        "16px Arial";
-
-    ctx.fillText(
-        "HP: " +
-        playerHealth.current +
-        "/" +
-        playerHealth.max,
-        25,
-        35
-    );
-
 }
+
+// ================= HOTBAR =================
 
 function drawHotbar() {
 
-    const slots = [
-        1,
-        2,
-        3,
-        4,
-        5
-    ];
+    const slots =
+        [1,2,3,4,5];
 
     const size = 55;
 
     const startX =
-        canvas.width / 2 -
-        (slots.length * size) / 2;
+
+        canvas.width / 2
+
+        -
+
+        (
+            slots.length *
+            size
+        ) / 2;
 
     const y =
         canvas.height - 80;
@@ -740,9 +1127,16 @@ function drawHotbar() {
             slots[i];
 
         ctx.fillStyle =
+
             block === selectedBlock
-            ? "#ffe066"
-            : "#444";
+
+            ?
+
+            "#ffe066"
+
+            :
+
+            "#444";
 
         ctx.fillRect(
             startX + i * size,
@@ -772,34 +1166,24 @@ function drawHotbar() {
                 "#2ecc71";
 
         ctx.fillRect(
-            startX + i * size + 8,
+            startX +
+            i * size +
+            8,
             y + 8,
             34,
             34
-        );
-
-        ctx.fillStyle =
-            "white";
-
-        ctx.font =
-            "14px Arial";
-
-        ctx.fillText(
-            i + 1,
-            startX +
-            i * size +
-            20,
-            y + 48
         );
 
     }
 
 }
 
+// ================= PAUSE =================
+
 function drawPauseMenu() {
 
     ctx.fillStyle =
-        "rgba(0,0,0,0.55)";
+        "rgba(0,0,0,0.6)";
 
     ctx.fillRect(
         0,
@@ -820,22 +1204,7 @@ function drawPauseMenu() {
     ctx.fillText(
         "PAUSED",
         canvas.width / 2,
-        canvas.height / 2 - 80
-    );
-
-    ctx.font =
-        "28px Arial";
-
-    ctx.fillText(
-        "ESC = Resume",
-        canvas.width / 2,
         canvas.height / 2
-    );
-
-    ctx.fillText(
-        "Modern Blocks v0.4",
-        canvas.width / 2,
-        canvas.height / 2 + 60
     );
 
     ctx.textAlign =
@@ -888,7 +1257,9 @@ function draw() {
     );
 
     if (paused) {
+
         drawPauseMenu();
+
     }
 
 }
@@ -898,7 +1269,9 @@ function draw() {
 function gameLoop() {
 
     if (!paused) {
+
         update();
+
     }
 
     draw();
@@ -909,8 +1282,15 @@ function gameLoop() {
         performance.now();
 
     if (
-        now - lastFpsTime >=
+
+        now -
+
+        lastFpsTime
+
+        >=
+
         1000
+
     ) {
 
         fps = frames;
