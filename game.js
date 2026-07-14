@@ -1258,13 +1258,7 @@ let selectedSlot = 0;
 
 // ================= START ITEMS =================
 
-inventory[0] = {
 
-    item: ITEM.WOOD,
-
-    count: 16
-
-};
 
 // ================= ITEM NAMES =================
 
