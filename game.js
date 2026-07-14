@@ -3269,43 +3269,7 @@ function drawInventory() {
 
 // ================= CRAFTING HELP =================
 
-function drawCraftingHelp() {
 
-    if (
-        !inventoryOpen
-    ) return;
-
-    ctx.fillStyle =
-        "white";
-
-    ctx.font =
-        "18px Arial";
-
-    ctx.fillText(
-        "R = Stick",
-        40,
-        canvas.height - 140
-    );
-
-    ctx.fillText(
-        "T = Crafting Table",
-        40,
-        canvas.height - 115
-    );
-
-    ctx.fillText(
-        "P = Wooden Pickaxe",
-        40,
-        canvas.height - 90
-    );
-
-    ctx.fillText(
-        "X = Wooden Axe",
-        40,
-        canvas.height - 65
-    );
-
-}
 
 // ======================================================
 // MODERN BLOCKS
