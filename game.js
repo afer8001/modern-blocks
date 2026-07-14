@@ -3488,8 +3488,6 @@ function draw() {
 
     drawInventory();
 
-    drawCraftingHelp();
-
     drawPauseMenu();
 
     drawFPS();
