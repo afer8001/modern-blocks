@@ -3591,12 +3591,7 @@ function draw() {
 
 // ================= FPS =================
 
-let fps = 0;
 
-let frames = 0;
-
-let lastFpsTime =
-    performance.now();
 
 // ================= MAIN UPDATE =================
 
