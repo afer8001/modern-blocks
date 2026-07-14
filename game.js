@@ -56,19 +56,9 @@ document.addEventListener(
 
 if (e.code === "KeyE") {
 
-    if (paused) {
+    if (paused) return;
 
-        paused = false;
-
-        inventoryOpen = true;
-
-    }
-
-    else {
-
-        inventoryOpen = !inventoryOpen;
-
-    }
+    inventoryOpen = !inventoryOpen;
 
 }
 
@@ -78,19 +68,13 @@ if (e.code === "Escape") {
 
         inventoryOpen = false;
 
-        paused = true;
+        return;
 
     }
 
-    else {
-
-        paused = !paused;
-
-    }
+    paused = !paused;
 
 }
-
-    }
 );
 
 document.addEventListener(
