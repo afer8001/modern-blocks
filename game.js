@@ -2449,67 +2449,6 @@ function craft(
 
 }
 
-// ================= INVENTORY KEYS =================
-// فقط وقتی اینونتوری بازه
-
-document.addEventListener(
-    "keydown",
-    e => {
-
-        if (
-            !inventoryOpen
-        ) return;
-
-        // R = Stick
-
-        if (
-            e.code === "KeyR"
-        ) {
-
-            craft(
-                recipes[0]
-            );
-
-        }
-
-        // T = Crafting Table
-
-        if (
-            e.code === "KeyT"
-        ) {
-
-            craft(
-                recipes[1]
-            );
-
-        }
-
-        // P = Wooden Pickaxe
-
-        if (
-            e.code === "KeyP"
-        ) {
-
-            craft(
-                recipes[2]
-            );
-
-        }
-
-        // X = Wooden Axe
-
-        if (
-            e.code === "KeyX"
-        ) {
-
-            craft(
-                recipes[3]
-            );
-
-        }
-
-    }
-);
 
 // ================= TOOL EQUIP =================
 
