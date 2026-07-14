@@ -8,7 +8,7 @@ function resize() {
 resize();
 window.addEventListener("resize", resize);
 
-// ===== Keybinds =====
+// ===== SETTINGS =====
 
 let settings = JSON.parse(
     localStorage.getItem("settings")
@@ -18,17 +18,34 @@ let settings = JSON.parse(
     jump: "Space"
 };
 
+function saveSettings() {
+    localStorage.setItem(
+        "settings",
+        JSON.stringify(settings)
+    );
+}
+
+// ===== INPUT =====
+
 const keys = {};
 
 document.addEventListener("keydown", e => {
     keys[e.code] = true;
+
+    if (e.code === "Escape") {
+        paused = !paused;
+    }
 });
 
 document.addEventListener("keyup", e => {
     keys[e.code] = false;
 });
 
-// ===== Player =====
+// ===== GAME STATE =====
+
+let paused = false;
+
+// ===== PLAYER =====
 
 const player = {
     x: 100,
@@ -51,7 +68,7 @@ let fps = 0;
 let frames = 0;
 let lastFpsTime = performance.now();
 
-// ===== Update =====
+// ===== UPDATE =====
 
 function update() {
 
@@ -82,7 +99,7 @@ function update() {
     }
 }
 
-// ===== Draw Stickman =====
+// ===== STICKMAN =====
 
 function drawStickman(x, y) {
 
@@ -113,7 +130,47 @@ function drawStickman(x, y) {
     ctx.stroke();
 }
 
-// ===== Draw =====
+// ===== PAUSE MENU =====
+
+function drawPauseMenu() {
+
+    ctx.fillStyle = "rgba(0,0,0,0.55)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.textAlign = "center";
+
+    ctx.font = "60px Arial";
+    ctx.fillText(
+        "PAUSED",
+        canvas.width / 2,
+        canvas.height / 2 - 100
+    );
+
+    ctx.font = "30px Arial";
+
+    ctx.fillText(
+        "ESC = Resume",
+        canvas.width / 2,
+        canvas.height / 2
+    );
+
+    ctx.fillText(
+        "Options (Coming Soon)",
+        canvas.width / 2,
+        canvas.height / 2 + 60
+    );
+
+    ctx.fillText(
+        "Modern Blocks v0.2",
+        canvas.width / 2,
+        canvas.height / 2 + 120
+    );
+
+    ctx.textAlign = "left";
+}
+
+// ===== DRAW =====
 
 function draw() {
 
@@ -121,28 +178,63 @@ function draw() {
 
     // Sky
     ctx.fillStyle = "#87CEEB";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
     // Ground
     ctx.fillStyle = "#45c945";
-    ctx.fillRect(0, groundY, canvas.width, canvas.height);
+    ctx.fillRect(
+        0,
+        groundY,
+        canvas.width,
+        canvas.height
+    );
 
-    drawStickman(player.x, player.y);
+    drawStickman(
+        player.x,
+        player.y
+    );
 
     ctx.fillStyle = "black";
     ctx.font = "20px Arial";
 
     ctx.fillText("FPS: " + fps, 20, 30);
-    ctx.fillText("Left: " + settings.left, 20, 60);
-    ctx.fillText("Right: " + settings.right, 20, 90);
-    ctx.fillText("Jump: " + settings.jump, 20, 120);
+
+    ctx.fillText(
+        "Left: " + settings.left,
+        20,
+        60
+    );
+
+    ctx.fillText(
+        "Right: " + settings.right,
+        20,
+        90
+    );
+
+    ctx.fillText(
+        "Jump: " + settings.jump,
+        20,
+        120
+    );
+
+    if (paused) {
+        drawPauseMenu();
+    }
 }
 
-// ===== Loop =====
+// ===== LOOP =====
 
 function gameLoop() {
 
-    update();
+    if (!paused) {
+        update();
+    }
+
     draw();
 
     frames++;
