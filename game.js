@@ -1,21 +1,32 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// ================= CANVAS =================
+
 function resize() {
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+
 }
+
 resize();
-window.addEventListener("resize", resize);
+
+window.addEventListener(
+    "resize",
+    resize
+);
 
 // ================= SETTINGS =================
 
 let settings = JSON.parse(
     localStorage.getItem("settings")
 ) || {
+
     left: "KeyA",
     right: "KeyD",
     jump: "Space"
+
 };
 
 // ================= INPUT =================
@@ -24,50 +35,79 @@ const keys = {};
 
 let jumpPressed = false;
 
-document.addEventListener("keydown", e => {
+document.addEventListener(
+    "keydown",
+    e => {
 
-    if (!keys[e.code]) {
+        if (!keys[e.code]) {
 
-        if (e.code === settings.jump) {
-            jumpPressed = true;
+            if (
+                e.code === settings.jump
+            ) {
+
+                jumpPressed = true;
+
+            }
+
+        }
+
+        keys[e.code] = true;
+
+        if (
+            e.code === "Escape"
+        ) {
+
+            paused = !paused;
+
+        }
+
+        if (
+            e.code === "KeyE"
+        ) {
+
+            inventoryOpen =
+                !inventoryOpen;
+
         }
 
     }
+);
 
-    keys[e.code] = true;
+document.addEventListener(
+    "keyup",
+    e => {
 
-    if (e.code === "Escape") {
-        paused = !paused;
+        keys[e.code] = false;
+
     }
-
-});
-
-document.addEventListener("keyup", e => {
-
-    keys[e.code] = false;
-
-});
-
+);
 
 // ================= MOUSE =================
 
 const mouse = {
+
     x: 0,
     y: 0
+
 };
 
-canvas.addEventListener("mousemove", e => {
+canvas.addEventListener(
+    "mousemove",
+    e => {
 
-    const rect =
-        canvas.getBoundingClientRect();
+        const rect =
+            canvas.getBoundingClientRect();
 
-    mouse.x =
-        e.clientX - rect.left;
+        mouse.x =
+            e.clientX -
+            rect.left;
 
-    mouse.y =
-        e.clientY - rect.top;
+        mouse.y =
+            e.clientY -
+            rect.top;
 
-});
+    }
+);
 
 // ================= GAME =================
 
@@ -76,21 +116,33 @@ let paused = false;
 const BLOCK = 32;
 
 const WORLD_WIDTH = 300;
-const WORLD_HEIGHT = 100;
+const WORLD_HEIGHT = 120;
+
+// ================= WORLD =================
 
 let world = [];
 
+const surface = [];
+
 // ================= INVENTORY =================
+
+let inventoryOpen = false;
 
 const inventory = {
 
-    grass: 999,
-    dirt: 999,
-    stone: 999,
-    wood: 999,
-    leaf: 999
+    grass: 0,
+    dirt: 0,
+    stone: 0,
+    wood: 0,
+    leaf: 0
 
 };
+
+// ================= DROPS =================
+
+let droppedItems = [];
+
+// ================= HOTBAR =================
 
 let selectedBlock = 2;
 
@@ -106,8 +158,10 @@ const playerHealth = {
 // ================= CAMERA =================
 
 const camera = {
+
     x: 0,
     y: 0
+
 };
 
 // ================= PLAYER =================
@@ -131,7 +185,7 @@ const player = {
     vy: 0,
 
     speed: 4,
-    jumpPower: 14,
+    jumpPower: 12,
 
     direction: 1,
 
@@ -143,35 +197,192 @@ let walkCycle = 0;
 
 const gravity = 0.7;
 
-// ================= WORLD =================
+// ================= TILE IDS =================
 
-for (let y = 0; y < WORLD_HEIGHT; y++) {
+const TILE = {
+
+    AIR: 0,
+
+    GRASS: 1,
+
+    DIRT: 2,
+
+    STONE: 3,
+
+    WOOD: 4,
+
+    LEAF: 5,
+
+    BEDROCK: 6
+
+};
+
+// ================= WORLD GENERATION =================
+
+// create empty world
+
+for (
+    let y = 0;
+    y < WORLD_HEIGHT;
+    y++
+) {
 
     world[y] = [];
 
-    for (let x = 0; x < WORLD_WIDTH; x++) {
+    for (
+        let x = 0;
+        x < WORLD_WIDTH;
+        x++
+    ) {
 
-        if (y < 20) {
+        world[y][x] =
+            TILE.AIR;
 
-            world[y][x] = 0;
+    }
 
-        }
+}
 
-        else if (y === 20) {
+// terrain heights
 
-            world[y][x] = 1;
+for (
+    let x = 0;
+    x < WORLD_WIDTH;
+    x++
+) {
 
-        }
+    const height =
 
-        else if (y < 28) {
+        22 +
 
-            world[y][x] = 2;
+        Math.floor(
+            Math.sin(
+                x * 0.15
+            ) * 3
+        ) +
 
-        }
+        Math.floor(
+            Math.sin(
+                x * 0.04
+            ) * 5
+        );
 
-        else {
+    surface[x] = height;
 
-            world[y][x] = 3;
+}
+
+// generate terrain
+
+for (
+    let x = 0;
+    x < WORLD_WIDTH;
+    x++
+) {
+
+    const h =
+        surface[x];
+
+    world[h][x] =
+        TILE.GRASS;
+
+    for (
+        let y = h + 1;
+        y < h + 6;
+        y++
+    ) {
+
+        world[y][x] =
+            TILE.DIRT;
+
+    }
+
+    for (
+        let y = h + 6;
+        y < WORLD_HEIGHT - 1;
+        y++
+    ) {
+
+        world[y][x] =
+            TILE.STONE;
+
+    }
+
+    world[
+        WORLD_HEIGHT - 1
+    ][x] = TILE.BEDROCK;
+
+}
+
+// caves
+
+for (
+    let i = 0;
+    i < 300;
+    i++
+) {
+
+    const cx =
+        Math.floor(
+            Math.random() *
+            WORLD_WIDTH
+        );
+
+    const cy =
+        25 +
+        Math.floor(
+            Math.random() * 70
+        );
+
+    const radius =
+        2 +
+        Math.floor(
+            Math.random() * 4
+        );
+
+    for (
+        let y = -radius;
+        y <= radius;
+        y++
+    ) {
+
+        for (
+            let x = -radius;
+            x <= radius;
+            x++
+        ) {
+
+            if (
+
+                x * x +
+                y * y <=
+                radius * radius
+
+            ) {
+
+                const tx =
+                    cx + x;
+
+                const ty =
+                    cy + y;
+
+                if (
+
+                    tx > 0 &&
+                    ty > 0 &&
+
+                    tx <
+                    WORLD_WIDTH &&
+
+                    ty <
+                    WORLD_HEIGHT - 1
+
+                ) {
+
+                    world[ty][tx] =
+                        TILE.AIR;
+
+                }
+
+            }
 
         }
 
@@ -179,31 +390,54 @@ for (let y = 0; y < WORLD_HEIGHT; y++) {
 
 }
 
-// ================= TREES =================
+// trees
 
 for (
-    let t = 8;
-    t < WORLD_WIDTH;
-    t += 18
+    let x = 10;
+    x < WORLD_WIDTH;
+    x += 18
 ) {
 
-    const baseY = 19;
+    const ground =
+        surface[x];
 
-    world[baseY][t] = 4;
-    world[baseY - 1][t] = 4;
-    world[baseY - 2][t] = 4;
+    world[
+        ground - 1
+    ][x] = TILE.WOOD;
 
-    world[baseY - 3][t] = 5;
-    world[baseY - 4][t] = 5;
+    world[
+        ground - 2
+    ][x] = TILE.WOOD;
 
-    world[baseY - 3][t - 1] = 5;
-    world[baseY - 3][t + 1] = 5;
+    world[
+        ground - 3
+    ][x] = TILE.WOOD;
 
-    world[baseY - 2][t - 1] = 5;
-    world[baseY - 2][t + 1] = 5;
+    world[
+        ground - 4
+    ][x] = TILE.LEAF;
+
+    world[
+        ground - 5
+    ][x] = TILE.LEAF;
+
+    world[
+        ground - 4
+    ][x - 1] = TILE.LEAF;
+
+    world[
+        ground - 4
+    ][x + 1] = TILE.LEAF;
+
+    world[
+        ground - 3
+    ][x - 1] = TILE.LEAF;
+
+    world[
+        ground - 3
+    ][x + 1] = TILE.LEAF;
 
 }
-
 // ================= FPS =================
 
 let fps = 0;
@@ -221,7 +455,7 @@ function getTile(tx, ty) {
         ty >= WORLD_HEIGHT
     ) {
 
-        return 3;
+        return TILE.BEDROCK;
 
     }
 
@@ -250,32 +484,84 @@ function isSolid(tile) {
 
     return (
 
-        tile === 1 ||
-        tile === 2 ||
-        tile === 3 ||
-        tile === 4 ||
-        tile === 5
+        tile === TILE.GRASS ||
+        tile === TILE.DIRT ||
+        tile === TILE.STONE ||
+        tile === TILE.WOOD ||
+        tile === TILE.LEAF ||
+        tile === TILE.BEDROCK
 
     );
 
 }
 
-// ================= RESPAWN =================
+// ================= COLLISION =================
 
-function respawn() {
+function collideAt(x, y) {
 
-    player.x = spawnPoint.x;
-    player.y = spawnPoint.y;
+    const left =
+        Math.floor(
+            x / BLOCK
+        );
 
-    player.vx = 0;
-    player.vy = 0;
+    const right =
+        Math.floor(
+            (
+                x +
+                player.width -
+                1
+            ) / BLOCK
+        );
 
-    playerHealth.current =
-        playerHealth.max;
+    const top =
+        Math.floor(
+            y / BLOCK
+        );
+
+    const bottom =
+        Math.floor(
+            (
+                y +
+                player.height -
+                1
+            ) / BLOCK
+        );
+
+    return (
+
+        isSolid(
+            getTile(
+                left,
+                top
+            )
+        ) ||
+
+        isSolid(
+            getTile(
+                right,
+                top
+            )
+        ) ||
+
+        isSolid(
+            getTile(
+                left,
+                bottom
+            )
+        ) ||
+
+        isSolid(
+            getTile(
+                right,
+                bottom
+            )
+        )
+
+    );
 
 }
 
-// ================= DAMAGE =================
+// ================= HEALTH =================
 
 function damage(amount) {
 
@@ -293,175 +579,81 @@ function damage(amount) {
 
 }
 
-// ================= COLLISION =================
+// ================= RESPAWN =================
 
-function collideAt(x, y) {
+function respawn() {
 
-    const left =
-        Math.floor(x / BLOCK);
+    player.x =
+        spawnPoint.x;
 
-    const right =
-        Math.floor(
-            (
-                x +
-                player.width -
-                1
-            ) / BLOCK
-        );
+    player.y =
+        spawnPoint.y;
 
-    const top =
-        Math.floor(y / BLOCK);
+    player.vx = 0;
+    player.vy = 0;
 
-    const bottom =
-        Math.floor(
-            (
-                y +
-                player.height -
-                1
-            ) / BLOCK
-        );
-
-    return (
-
-        isSolid(
-            getTile(left, top)
-        ) ||
-
-        isSolid(
-            getTile(right, top)
-        ) ||
-
-        isSolid(
-            getTile(left, bottom)
-        ) ||
-
-        isSolid(
-            getTile(right, bottom)
-        )
-
-    );
-
-}
-// ================= RANGE =================
-
-const BREAK_RANGE = 6;
-const PLACE_RANGE = 6;
-
-// ================= PLAYER BLOCK CHECK =================
-
-function playerIntersectsTile(tx, ty) {
-
-    const px1 = player.x;
-    const py1 = player.y;
-
-    const px2 =
-        player.x + player.width;
-
-    const py2 =
-        player.y + player.height;
-
-    const bx1 = tx * BLOCK;
-    const by1 = ty * BLOCK;
-
-    const bx2 = bx1 + BLOCK;
-    const by2 = by1 + BLOCK;
-
-    return (
-
-        px1 < bx2 &&
-        px2 > bx1 &&
-        py1 < by2 &&
-        py2 > by1
-
-    );
+    playerHealth.current =
+        playerHealth.max;
 
 }
 
-// ================= DISTANCE =================
+// ================= CAMERA =================
 
-function tileDistance(tx, ty) {
+function updateCamera() {
 
-    const playerTileX =
-        Math.floor(
-            (
-                player.x +
-                player.width / 2
-            ) / BLOCK
-        );
+    camera.x =
 
-    const playerTileY =
-        Math.floor(
-            (
-                player.y +
-                player.height / 2
-            ) / BLOCK
-        );
+        player.x -
 
-    const dx =
-        tx - playerTileX;
+        canvas.width / 2;
 
-    const dy =
-        ty - playerTileY;
+    camera.y =
 
-    return Math.sqrt(
-        dx * dx +
-        dy * dy
-    );
+        player.y -
 
-}
+        canvas.height / 2;
 
-// ================= HAS NEIGHBOR =================
+    const maxCamX =
 
-function hasNeighbor(tx, ty) {
+        WORLD_WIDTH *
+        BLOCK -
 
-    return (
+        canvas.width;
 
-        getTile(
-            tx + 1,
-            ty
-        ) !== 0 ||
+    const maxCamY =
 
-        getTile(
-            tx - 1,
-            ty
-        ) !== 0 ||
+        WORLD_HEIGHT *
+        BLOCK -
 
-        getTile(
-            tx,
-            ty + 1
-        ) !== 0 ||
+        canvas.height;
 
-        getTile(
-            tx,
-            ty - 1
-        ) !== 0
+    if (
+        camera.x < 0
+    ) camera.x = 0;
 
-    );
+    if (
+        camera.y < 0
+    ) camera.y = 0;
+
+    if (
+        camera.x > maxCamX
+    ) camera.x = maxCamX;
+
+    if (
+        camera.y > maxCamY
+    ) camera.y = maxCamY;
 
 }
 
-// ================= UPDATE =================
+// ================= MOVEMENT =================
 
-function update() {
-
-    if (keys["Digit1"])
-        selectedBlock = 1;
-
-    if (keys["Digit2"])
-        selectedBlock = 2;
-
-    if (keys["Digit3"])
-        selectedBlock = 3;
-
-    if (keys["Digit4"])
-        selectedBlock = 4;
-
-    if (keys["Digit5"])
-        selectedBlock = 5;
+function updatePlayer() {
 
     player.vx = 0;
 
-    if (keys[settings.left]) {
+    if (
+        keys[settings.left]
+    ) {
 
         player.vx =
             -player.speed;
@@ -471,7 +663,9 @@ function update() {
 
     }
 
-    if (keys[settings.right]) {
+    if (
+        keys[settings.right]
+    ) {
 
         player.vx =
             player.speed;
@@ -481,7 +675,7 @@ function update() {
 
     }
 
-    // ================= JUMP FIX =================
+    // jump
 
     if (
         jumpPressed &&
@@ -499,17 +693,22 @@ function update() {
 
     }
 
+    // walk animation
+
     if (
-        Math.abs(player.vx) > 0
+        Math.abs(
+            player.vx
+        ) > 0
     ) {
 
         walkCycle += 0.18;
 
     }
 
-    // ================= X =================
+    // X movement
 
-    player.x += player.vx;
+    player.x +=
+        player.vx;
 
     if (
         collideAt(
@@ -564,19 +763,25 @@ function update() {
 
     }
 
-    // ================= Y =================
+    // gravity
 
     player.vy += gravity;
 
     if (
         player.vy > 20
     ) {
+
         player.vy = 20;
+
     }
 
-    player.y += player.vy;
+    player.y +=
+        player.vy;
 
-    player.onGround = false;
+    player.onGround =
+        false;
+
+    // Y collision
 
     if (
         collideAt(
@@ -634,12 +839,14 @@ function update() {
 
     }
 
-    // ================= WORLD LIMITS =================
+    // world border
 
     if (
         player.x < 0
     ) {
+
         player.x = 0;
+
     }
 
     const maxX =
@@ -654,10 +861,12 @@ function update() {
     if (
         player.x > maxX
     ) {
+
         player.x = maxX;
+
     }
 
-    // ================= VOID =================
+    // void damage
 
     if (
 
@@ -666,9 +875,7 @@ function update() {
         WORLD_HEIGHT *
         BLOCK
 
-        +
-
-        500
+        + 500
 
     ) {
 
@@ -676,178 +883,383 @@ function update() {
 
     }
 
-    // ================= CAMERA =================
+}
 
-    camera.x =
+// ================= UPDATE =================
 
-        player.x
+function update() {
 
-        -
+    updatePlayer();
 
-        canvas.width / 2;
+    updateCamera();
 
-    camera.y =
+}
+// ================= INVENTORY HELPERS =================
 
-        player.y
+function addItem(tile) {
 
-        -
+    if (tile === TILE.GRASS)
+        inventory.grass++;
 
-        canvas.height / 2;
+    if (tile === TILE.DIRT)
+        inventory.dirt++;
 
-    const maxCamX =
+    if (tile === TILE.STONE)
+        inventory.stone++;
 
-        WORLD_WIDTH *
-        BLOCK
+    if (tile === TILE.WOOD)
+        inventory.wood++;
 
-        -
-
-        canvas.width;
-
-    const maxCamY =
-
-        WORLD_HEIGHT *
-        BLOCK
-
-        -
-
-        canvas.height;
-
-    if (
-        camera.x < 0
-    ) camera.x = 0;
-
-    if (
-        camera.y < 0
-    ) camera.y = 0;
-
-    if (
-        camera.x > maxCamX
-    ) camera.x = maxCamX;
-
-    if (
-        camera.y > maxCamY
-    ) camera.y = maxCamY;
+    if (tile === TILE.LEAF)
+        inventory.leaf++;
 
 }
 
-// ================= BLOCK EVENTS =================
+// ================= DROP SYSTEM =================
+
+function spawnDrop(
+    x,
+    y,
+    tile
+) {
+
+    droppedItems.push({
+
+        x: x,
+        y: y,
+
+        vx:
+            (Math.random() - 0.5)
+            * 2,
+
+        vy: -2,
+
+        tile: tile
+
+    });
+
+}
+
+function updateDrops() {
+
+    for (
+        let i =
+            droppedItems.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const item =
+            droppedItems[i];
+
+        item.vy += 0.25;
+
+        if (
+            item.vy > 8
+        ) {
+            item.vy = 8;
+        }
+
+        item.x += item.vx;
+        item.y += item.vy;
+
+        const tx =
+            Math.floor(
+                item.x / BLOCK
+            );
+
+        const ty =
+            Math.floor(
+                item.y / BLOCK
+            );
+
+        if (
+            isSolid(
+                getTile(tx, ty)
+            )
+        ) {
+
+            item.y =
+                ty * BLOCK - 6;
+
+            item.vy = 0;
+
+        }
+
+        const dx =
+            item.x -
+            (
+                player.x +
+                player.width / 2
+            );
+
+        const dy =
+            item.y -
+            (
+                player.y +
+                player.height / 2
+            );
+
+        const dist =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+
+        if (
+            dist < 40
+        ) {
+
+            addItem(
+                item.tile
+            );
+
+            droppedItems.splice(
+                i,
+                1
+            );
+
+        }
+
+    }
+
+}
+
+// ================= RANGE =================
+
+const BREAK_RANGE = 6;
+const PLACE_RANGE = 6;
+
+function tileDistance(
+    tx,
+    ty
+) {
+
+    const px =
+
+        Math.floor(
+
+            (
+                player.x +
+                player.width / 2
+            ) / BLOCK
+
+        );
+
+    const py =
+
+        Math.floor(
+
+            (
+                player.y +
+                player.height / 2
+            ) / BLOCK
+
+        );
+
+    const dx =
+        tx - px;
+
+    const dy =
+        ty - py;
+
+    return Math.sqrt(
+        dx * dx +
+        dy * dy
+    );
+
+}
+
+// ================= PLAYER TILE =================
+
+function playerInsideTile(
+    tx,
+    ty
+) {
+
+    const bx =
+        tx * BLOCK;
+
+    const by =
+        ty * BLOCK;
+
+    return (
+
+        player.x <
+            bx + BLOCK &&
+
+        player.x +
+            player.width >
+            bx &&
+
+        player.y <
+            by + BLOCK &&
+
+        player.y +
+            player.height >
+            by
+
+    );
+
+}
+
+// ================= NEIGHBOR CHECK =================
+
+function hasNeighbor(
+    tx,
+    ty
+) {
+
+    return (
+
+        getTile(
+            tx + 1,
+            ty
+        ) !== TILE.AIR ||
+
+        getTile(
+            tx - 1,
+            ty
+        ) !== TILE.AIR ||
+
+        getTile(
+            tx,
+            ty + 1
+        ) !== TILE.AIR ||
+
+        getTile(
+            tx,
+            ty - 1
+        ) !== TILE.AIR
+
+    );
+
+}
+
+// ================= MOUSE EVENTS =================
 
 canvas.addEventListener(
     "mousedown",
     e => {
 
-        if (paused) return;
+        if (paused)
+            return;
 
-        const worldX =
+        if (inventoryOpen)
+            return;
 
+        const tx =
             Math.floor(
-
                 (
                     mouse.x +
                     camera.x
                 ) / BLOCK
-
             );
 
-        const worldY =
-
+        const ty =
             Math.floor(
-
                 (
                     mouse.y +
                     camera.y
                 ) / BLOCK
-
             );
 
-        // BREAK
+        // ================= BREAK =================
 
         if (
             e.button === 0
         ) {
 
             if (
-
                 tileDistance(
-                    worldX,
-                    worldY
+                    tx,
+                    ty
                 ) >
-
                 BREAK_RANGE
-
             ) return;
 
             const tile =
-
                 getTile(
-                    worldX,
-                    worldY
+                    tx,
+                    ty
                 );
 
             if (
+                tile ===
+                TILE.AIR
+            ) return;
 
-                tile !== 0 &&
-                tile !== 1
+            if (
+                tile ===
+                TILE.BEDROCK
+            ) return;
 
+            // stone drops only later with tools
+            if (
+                tile !==
+                TILE.STONE
             ) {
 
-                setTile(
-                    worldX,
-                    worldY,
-                    0
+                spawnDrop(
+
+                    tx * BLOCK +
+                    BLOCK / 2,
+
+                    ty * BLOCK +
+                    BLOCK / 2,
+
+                    tile
+
                 );
 
             }
 
+            setTile(
+                tx,
+                ty,
+                TILE.AIR
+            );
+
         }
 
-        // PLACE
+        // ================= PLACE =================
 
         if (
             e.button === 2
         ) {
 
             if (
-
                 tileDistance(
-                    worldX,
-                    worldY
+                    tx,
+                    ty
                 ) >
-
                 PLACE_RANGE
-
             ) return;
 
             if (
-
                 getTile(
-                    worldX,
-                    worldY
-                ) !== 0
-
+                    tx,
+                    ty
+                ) !== TILE.AIR
             ) return;
 
             if (
-
-                playerIntersectsTile(
-                    worldX,
-                    worldY
+                playerInsideTile(
+                    tx,
+                    ty
                 )
-
             ) return;
 
             if (
-
                 !hasNeighbor(
-                    worldX,
-                    worldY
+                    tx,
+                    ty
                 )
-
             ) return;
 
             setTile(
-                worldX,
-                worldY,
+                tx,
+                ty,
                 selectedBlock
             );
 
@@ -858,19 +1270,38 @@ canvas.addEventListener(
 
 canvas.addEventListener(
     "contextmenu",
-    e => e.preventDefault()
+    e =>
+        e.preventDefault()
 );
-// ================= STICKMAN =================
+
+// ================= UPDATE OVERRIDE =================
+
+function update() {
+
+    updatePlayer();
+
+    updateCamera();
+
+    updateDrops();
+
+}
+// ================= PLAYER DRAW =================
 
 function drawStickman(x, y) {
 
-    const legAnim =
-        Math.sin(walkCycle) * 8;
+    const leg =
+        Math.sin(
+            walkCycle
+        ) * 8;
 
-    const armAnim =
-        Math.sin(walkCycle) * 6;
+    const arm =
+        Math.sin(
+            walkCycle
+        ) * 6;
 
-    ctx.strokeStyle = "black";
+    ctx.strokeStyle =
+        "black";
+
     ctx.lineWidth = 3;
 
     // head
@@ -909,7 +1340,7 @@ function drawStickman(x, y) {
     );
 
     ctx.lineTo(
-        x + 12 - armAnim,
+        x + 12 - arm,
         y + 30
     );
 
@@ -919,7 +1350,7 @@ function drawStickman(x, y) {
     );
 
     ctx.lineTo(
-        x + 12 + armAnim,
+        x + 12 + arm,
         y + 30
     );
 
@@ -931,7 +1362,7 @@ function drawStickman(x, y) {
     );
 
     ctx.lineTo(
-        x + 4 + legAnim,
+        x + 4 + leg,
         y + 50
     );
 
@@ -941,20 +1372,28 @@ function drawStickman(x, y) {
     );
 
     ctx.lineTo(
-        x + 20 - legAnim,
+        x + 20 - leg,
         y + 50
     );
 
     ctx.stroke();
 
-    // direction eye
+    // eye
 
-    ctx.fillStyle = "black";
+    ctx.fillStyle =
+        "black";
 
     const eyeX =
+
         player.direction === 1
-        ? x + 15
-        : x + 9;
+
+        ?
+
+        x + 15
+
+        :
+
+        x + 9;
 
     ctx.beginPath();
 
@@ -970,24 +1409,34 @@ function drawStickman(x, y) {
 
 }
 
-// ================= WORLD =================
+// ================= WORLD DRAW =================
 
 function drawWorld() {
 
     const startX =
-        Math.floor(camera.x / BLOCK);
+
+        Math.floor(
+            camera.x / BLOCK
+        );
 
     const endX =
+
         startX +
+
         Math.ceil(
             canvas.width / BLOCK
         ) + 2;
 
     const startY =
-        Math.floor(camera.y / BLOCK);
+
+        Math.floor(
+            camera.y / BLOCK
+        );
 
     const endY =
+
         startY +
+
         Math.ceil(
             canvas.height / BLOCK
         ) + 2;
@@ -1005,48 +1454,85 @@ function drawWorld() {
         ) {
 
             if (
+
                 x < 0 ||
                 y < 0 ||
+
                 x >= WORLD_WIDTH ||
                 y >= WORLD_HEIGHT
+
             ) continue;
 
             const tile =
                 world[y][x];
 
-            if (tile === 0)
-                continue;
+            if (
+                tile === TILE.AIR
+            ) continue;
 
-            if (tile === 1)
-                ctx.fillStyle = "#4CAF50";
+            if (
+                tile === TILE.GRASS
+            )
+                ctx.fillStyle =
+                    "#4CAF50";
 
-            if (tile === 2)
-                ctx.fillStyle = "#8B5A2B";
+            if (
+                tile === TILE.DIRT
+            )
+                ctx.fillStyle =
+                    "#8B5A2B";
 
-            if (tile === 3)
-                ctx.fillStyle = "#777777";
+            if (
+                tile === TILE.STONE
+            )
+                ctx.fillStyle =
+                    "#777777";
 
-            if (tile === 4)
-                ctx.fillStyle = "#6b3e1d";
+            if (
+                tile === TILE.WOOD
+            )
+                ctx.fillStyle =
+                    "#6b3e1d";
 
-            if (tile === 5)
-                ctx.fillStyle = "#2ecc71";
+            if (
+                tile === TILE.LEAF
+            )
+                ctx.fillStyle =
+                    "#2ecc71";
+
+            if (
+                tile === TILE.BEDROCK
+            )
+                ctx.fillStyle =
+                    "#222";
 
             ctx.fillRect(
-                x * BLOCK - camera.x,
-                y * BLOCK - camera.y,
+
+                x * BLOCK -
+                camera.x,
+
+                y * BLOCK -
+                camera.y,
+
                 BLOCK,
                 BLOCK
+
             );
 
             ctx.strokeStyle =
-                "rgba(0,0,0,0.12)";
+                "rgba(0,0,0,0.1)";
 
             ctx.strokeRect(
-                x * BLOCK - camera.x,
-                y * BLOCK - camera.y,
+
+                x * BLOCK -
+                camera.x,
+
+                y * BLOCK -
+                camera.y,
+
                 BLOCK,
                 BLOCK
+
             );
 
         }
@@ -1055,7 +1541,63 @@ function drawWorld() {
 
 }
 
-// ================= HEALTH =================
+// ================= DROPS DRAW =================
+
+function drawDrops() {
+
+    for (
+        const item
+        of droppedItems
+    ) {
+
+        if (
+            item.tile === TILE.GRASS
+        )
+            ctx.fillStyle =
+                "#4CAF50";
+
+        if (
+            item.tile === TILE.DIRT
+        )
+            ctx.fillStyle =
+                "#8B5A2B";
+
+        if (
+            item.tile === TILE.STONE
+        )
+            ctx.fillStyle =
+                "#777777";
+
+        if (
+            item.tile === TILE.WOOD
+        )
+            ctx.fillStyle =
+                "#6b3e1d";
+
+        if (
+            item.tile === TILE.LEAF
+        )
+            ctx.fillStyle =
+                "#2ecc71";
+
+        ctx.fillRect(
+
+            item.x -
+            camera.x - 6,
+
+            item.y -
+            camera.y - 6,
+
+            12,
+            12
+
+        );
+
+    }
+
+}
+
+// ================= HEALTH BAR =================
 
 function drawHealthBar() {
 
@@ -1073,13 +1615,17 @@ function drawHealthBar() {
         "#ff4040";
 
     ctx.fillRect(
+
         15,
         15,
+
         (
             playerHealth.current /
             playerHealth.max
         ) * 220,
+
         30
+
     );
 
     ctx.strokeStyle =
@@ -1105,9 +1651,7 @@ function drawHotbar() {
 
     const startX =
 
-        canvas.width / 2
-
-        -
+        canvas.width / 2 -
 
         (
             slots.length *
@@ -1128,7 +1672,8 @@ function drawHotbar() {
 
         ctx.fillStyle =
 
-            block === selectedBlock
+            block ===
+            selectedBlock
 
             ?
 
@@ -1139,10 +1684,15 @@ function drawHotbar() {
             "#444";
 
         ctx.fillRect(
-            startX + i * size,
+
+            startX +
+            i * size,
+
             y,
+
             50,
             50
+
         );
 
         if (block === 1)
@@ -1166,24 +1716,104 @@ function drawHotbar() {
                 "#2ecc71";
 
         ctx.fillRect(
+
             startX +
             i * size +
             8,
+
             y + 8,
+
             34,
             34
+
         );
 
     }
 
 }
 
-// ================= PAUSE =================
+// ================= INVENTORY =================
+
+function drawInventory() {
+
+    if (
+        !inventoryOpen
+    ) return;
+
+    ctx.fillStyle =
+        "rgba(0,0,0,0.85)";
+
+    ctx.fillRect(
+
+        canvas.width / 2 - 250,
+        canvas.height / 2 - 180,
+
+        500,
+        360
+
+    );
+
+    ctx.fillStyle =
+        "white";
+
+    ctx.font =
+        "28px Arial";
+
+    ctx.fillText(
+
+        "Inventory",
+
+        canvas.width / 2 - 60,
+
+        canvas.height / 2 - 130
+
+    );
+
+    ctx.font =
+        "22px Arial";
+
+    ctx.fillText(
+        "Grass: " +
+        inventory.grass,
+        canvas.width / 2 - 180,
+        canvas.height / 2 - 60
+    );
+
+    ctx.fillText(
+        "Dirt: " +
+        inventory.dirt,
+        canvas.width / 2 - 180,
+        canvas.height / 2 - 20
+    );
+
+    ctx.fillText(
+        "Stone: " +
+        inventory.stone,
+        canvas.width / 2 - 180,
+        canvas.height / 2 + 20
+    );
+
+    ctx.fillText(
+        "Wood: " +
+        inventory.wood,
+        canvas.width / 2 - 180,
+        canvas.height / 2 + 60
+    );
+
+    ctx.fillText(
+        "Leaf: " +
+        inventory.leaf,
+        canvas.width / 2 - 180,
+        canvas.height / 2 + 100
+    );
+
+}
+// ================= PAUSE MENU =================
 
 function drawPauseMenu() {
 
     ctx.fillStyle =
-        "rgba(0,0,0,0.6)";
+        "rgba(0,0,0,0.65)";
 
     ctx.fillRect(
         0,
@@ -1204,11 +1834,51 @@ function drawPauseMenu() {
     ctx.fillText(
         "PAUSED",
         canvas.width / 2,
-        canvas.height / 2
+        canvas.height / 2 - 60
+    );
+
+    ctx.font =
+        "24px Arial";
+
+    ctx.fillText(
+        "ESC = Resume",
+        canvas.width / 2,
+        canvas.height / 2 + 10
+    );
+
+    ctx.fillText(
+        "E = Inventory",
+        canvas.width / 2,
+        canvas.height / 2 + 50
     );
 
     ctx.textAlign =
         "left";
+
+}
+
+// ================= FPS =================
+
+function updateFPS() {
+
+    frames++;
+
+    const now =
+        performance.now();
+
+    if (
+        now -
+        lastFpsTime >=
+        1000
+    ) {
+
+        fps = frames;
+
+        frames = 0;
+
+        lastFpsTime = now;
+
+    }
 
 }
 
@@ -1223,6 +1893,8 @@ function draw() {
         canvas.height
     );
 
+    // sky
+
     ctx.fillStyle =
         "#87CEEB";
 
@@ -1233,27 +1905,59 @@ function draw() {
         canvas.height
     );
 
+    // world
+
     drawWorld();
 
+    // drops
+
+    drawDrops();
+
+    // player
+
     drawStickman(
-        player.x - camera.x,
-        player.y - camera.y
+        player.x -
+        camera.x,
+
+        player.y -
+        camera.y
     );
+
+    // ui
 
     drawHealthBar();
 
     drawHotbar();
 
+    drawInventory();
+
+    // fps
+
     ctx.fillStyle =
         "black";
 
     ctx.font =
-        "20px Arial";
+        "18px Arial";
 
     ctx.fillText(
         "FPS: " + fps,
         20,
         80
+    );
+
+    ctx.fillText(
+        "Drops: " +
+        droppedItems.length,
+        20,
+        105
+    );
+
+    // version
+
+    ctx.fillText(
+        "Modern Blocks v0.6",
+        20,
+        130
     );
 
     if (paused) {
@@ -1264,7 +1968,7 @@ function draw() {
 
 }
 
-// ================= LOOP =================
+// ================= GAME LOOP =================
 
 function gameLoop() {
 
@@ -1276,35 +1980,14 @@ function gameLoop() {
 
     draw();
 
-    frames++;
-
-    const now =
-        performance.now();
-
-    if (
-
-        now -
-
-        lastFpsTime
-
-        >=
-
-        1000
-
-    ) {
-
-        fps = frames;
-
-        frames = 0;
-
-        lastFpsTime = now;
-
-    }
+    updateFPS();
 
     requestAnimationFrame(
         gameLoop
     );
 
 }
+
+// ================= START =================
 
 gameLoop();
